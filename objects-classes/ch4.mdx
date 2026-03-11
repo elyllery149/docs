@@ -1,0 +1,475 @@
+---
+title: "Chapter 4: This Works"
+description: "Master the this keyword in JavaScript - understand context binding rules, arrow functions, explicit vs implicit assignment, and how this enables dynamic behavior."
+---
+
+<Note>
+  This book is a **work in progress**. Content may be updated as the source material evolves.
+</Note>
+
+We've seen the `this` keyword used quite a bit so far, but haven't really dug in to understand exactly how it works in JS. It's time we do so.
+
+But to properly understand `this` in JS, you need to set aside any preconceptions you may have, especially assumptions from how `this` works in other programming languages you may have experience in.
+
+Here's the most important thing to understand about `this`: the determination of what value (usually, object) `this` points at is not made at author time, but rather determined at runtime. That means you cannot simply look at a `this`-aware function (even a method in a `class` definition) and know for sure what `this` will hold while that function runs.
+
+Instead, you have to find each place the function is invoked, and look at *how* it's invoked (not even *where* matters). That's the only way to fully answer what `this` will point to.
+
+<Warning>
+A single `this`-aware function can be invoked at least four different ways, and any of those approaches will end up assigning a different `this` for that particular function invocation.
+</Warning>
+
+## This Aware
+
+I used the phrase `this`-aware just a moment ago. But what exactly do I mean by that?
+
+Any function that has a `this` keyword in it.
+
+If a function does not have `this` in it anywhere, then the rules of how `this` behaves don't affect that function in any way. But if it *does* have even a single `this` in it, then you absolutely cannot determine how the function will behave without figuring out, for each invocation of the function, what `this` will point to.
+
+It's sort of like the `this` keyword is a placeholder in a template. That placeholder's value-replacement doesn't get determined when we author the code; it gets determined while the code is running.
+
+### This Confuses Me
+
+Now, in fairness, that's already partially true if we consider a function's parameters. To understand how a function is going to work, we need to know what is being passed into it. So any function with at least one parameter is, in a similar sense, *argument*-aware.
+
+But with parameters, we often have a bit more of a hint from the function itself what the parameters will do and hold. We often see the names of the parameters declared right in the function header, which goes a long way to explaining their nature/purpose.
+
+Actually, `this` is very much like a parameter to a function, but it's an implicit parameter rather than an explicit one. You don't see any signal that `this` is going to be used, in the function header anywhere. You have to read the entire function body to see if `this` appears anywhere.
+
+<Tip>
+The "parameter" name is always `this`, so we don't get much of a hint as to its nature/purpose from such a general name. In fact, there's historically a lot of confusion of what "this" even is supposed to mean.
+</Tip>
+
+### So What Is This?
+
+If `this` is an implicit parameter, what's its purpose? What's being passed in?
+
+Hopefully you have already read the "Scope & Closures" book of this series. In that book, I explained at length how scopes (and closures!) work, an especially important characteristic of functions.
+
+Lexical scope (including all the variables closed over) represents a *static* context for the function's lexical identifier references to be evaluated against. It's fixed/static because at author time, when you place functions and variable declarations in various (nested) scopes, those decisions are fixed, and unaffected by any runtime conditions.
+
+By contrast, a different programming language might offer *dynamic* scope, where the context for a function's variable references is not determined by author-time decisions but by runtime conditions.
+
+<Note>
+JS scope is always and only lexical and *static* (if we ignore non-strict mode cheats like `eval(..)` and `with`). However, one of the truly powerful things about JS is that it offers another mechanism with similar flexibility and capabilities to *dynamic* scope.
+</Note>
+
+The `this` mechanism is, effectively, *dynamic* context (not scope); it's how a `this`-aware function can be dynamically invoked against different contexts -- something that's impossible with closure and lexical scope identifiers!
+
+### Can We Get On With This?
+
+So why have I belabored *this* subject for a couple of pages now? You get it, right!? You're ready to move on.
+
+My point is, you the author of code, and all other readers of the code even years or decades in the future, need to be `this`-aware. That's the choice, the burden, you place on the reading of such code. And yes, that goes for the choice to use `class` (see Chapter 3), as most class methods will be `this`-aware out of necessity.
+
+<Warning>
+Be aware of *this* `this` choice in code you write. Do it intentionally, and do it in such a way as to produce more outcome benefit than burden. Make sure `this` usage in your code *carries its own weight*.
+</Warning>
+
+Let me put it *this* way: don't use `this`-aware code unless you really can justify it, and you've carefully weighed the costs. Just because you've seen a lot of code examples slinging around `this` in others' code, doesn't mean that `this` belongs in *this* code you're writing.
+
+The `this` mechanism in JS, paired with `[[Prototype]]` delegation, is an extremely powerful pillar of the language. But as the cliche goes: "with great power comes great responsibility".
+
+## This Is It!
+
+OK, enough of the wordy lecture. You're ready to dive into `this` code, right?
+
+Let's revisit (and extend) `Point2d` from Chapter 3, but just as an object with data properties and functions on it, instead of using `class`:
+
+```js
+var point = {
+    x: null,
+    y: null,
+
+    init(x,y) {
+        this.x = x;
+        this.y = y;
+    },
+    rotate(angleRadians) {
+        var rotatedX = this.x * Math.cos(angleRadians) -
+            this.y * Math.sin(angleRadians);
+        var rotatedY = this.x * Math.sin(angleRadians) +
+            this.y * Math.cos(angleRadians);
+        this.x = rotatedX;
+        this.y = rotatedY;
+    },
+    toString() {
+        return `(${this.x},${this.y})`;
+    },
+};
+```
+
+As you can see, the `init(..)`, `rotate(..)`, and `toString()` functions are `this`-aware. You might be in the habit of assuming that the `this` reference will obviously always hold the `point` object. But that's not guaranteed in any way.
+
+Keep reminding yourself as you go through the rest of this chapter: the `this` value for a function is determined by *how* the function is invoked.
+
+### Implicit Context Invocation
+
+Consider this call:
+
+```js
+point.init(3,4);
+```
+
+We're invoking the `init(..)` function, but notice the `point.` in front of it? This is an *implicit context* binding. It says to JS: invoke the `init(..)` function with `this` referencing `point`.
+
+That is the *normal* way we'd expect a `this` to work, and that's also one of the most common ways we invoke functions. So the typical invocation gives us the intuitive outcome. That's a good thing!
+
+### Default Context Invocation
+
+But what happens if we do this?
+
+```js
+const init = point.init;
+init(3,4);
+```
+
+You might assume that we'd get the same outcome as the previous snippet. But that's not how JS `this` assignment works.
+
+The *call-site* for the function is `init(3,4)`, which is different than `point.init(3,4)`. When there's no *implicit context* (`point.`), nor any other kind of `this` assignment mechanism, the *default context* assignment occurs.
+
+What will `this` reference when `init(3,4)` is invoked like that?
+
+*It depends.*
+
+Uh oh. Depends? That sounds confusing.
+
+Don't worry, it's not as bad as it sounds. The *default context* assignment depends on whether the code is in strict-mode or not. But thankfully, virtually all JS code these days is running in strict-mode; for example, ESM (ES Modules) always run in strict-mode, as does code inside a `class` block.
+
+So almost all of the time, modern JS code will be running in strict-mode, and thus the *default assignment* context won't "depend" on anything; it's pretty straightforward: `undefined`. That's it!
+
+<Note>
+Keep in mind: `undefined` does not mean "not defined"; it means, "defined with the special empty `undefined` value".
+</Note>
+
+That means `init(3,4)`, if run in strict-mode, would throw an exception. Why? Because the `this.x` reference in `init(..)` is a `.x` property access on `undefined` (i.e., `undefined.x`), which is not allowed:
+
+```js
+"use strict";
+
+var point = { /* .. */ };
+
+const init = point.init;
+init(3,4);
+// TypeError: Cannot set properties of
+// undefined (setting 'x')
+```
+
+Stop for a moment and consider: why would JS choose to default the context to `undefined`, so that any *default context* invocation of a `this`-aware function will fail with such an exception?
+
+Because a `this`-aware function **always needs a `this`**. The invocation `init(3,4)` isn't providing a `this`, so that *is* a mistake, and *should* raise an exception so the mistake can be corrected. The lesson: never invoke a `this`-aware function without providing it a `this`!
+
+<Warning>
+Always make sure your code is running in strict-mode! In non-strict mode, the *default context* is the global object (`globalThis`), which can lead to accidental global variable creation.
+</Warning>
+
+### Explicit Context Invocation
+
+Functions can alternately be invoked with *explicit context*, using the built-in `call(..)` or `apply(..)` utilities:
+
+```js
+var point = { /* .. */ };
+
+const init = point.init;
+
+init.call( point, 3, 4 );
+// or: init.apply( point, [ 3, 4 ] )
+
+point.x;        // 3
+point.y;        // 4
+```
+
+`init.call(point,3,4)` is effectively the same as `point.init(3,4)`, in that both of them assign `point` as the `this` context for the `init(..)` invocation.
+
+<Note>
+Both `call(..)` and `apply(..)` utilities take as their first argument a `this` context value; that's almost always an object, but can technically can be any value (number, string, etc). The `call(..)` utility takes subsequent arguments and passes them through to the invoked function, whereas `apply(..)` expects its second argument to be an array of values to pass as arguments.
+</Note>
+
+Let's recall the original snippet:
+
+```js
+var point = {
+    x: null,
+    y: null,
+
+    init(x,y) {
+        this.x = x;
+        this.y = y;
+    },
+    rotate(angleRadians) { /* .. */ },
+    toString() {
+        return `(${this.x},${this.y})`;
+    },
+};
+
+point.init(3,4);
+
+var anotherPoint = {};
+point.init.call( anotherPoint, 5, 6 );
+
+point.x;                // 3
+point.y;                // 4
+anotherPoint.x;         // 5
+anotherPoint.y;         // 6
+```
+
+Are you seeing what I did there?
+
+I wanted to define `anotherPoint`, but I didn't want to repeat the definitions of those `init(..)` / `rotate(..)` / `toString()` functions from `point`. So I "borrowed" a function reference, `point.init`, and explicitly set the empty object `anotherPoint` as the `this` context, via `call(..)`.
+
+Any `this`-aware functions can be borrowed like this: `point.rotate.call(anotherPoint, ..)`, `point.toString.call(anotherPoint)`.
+
+### New Context Invocation
+
+We've so far seen three different ways of context assignment at the function call-site: *default*, *implicit*, and *explicit*.
+
+A fourth way to call a function, and assign the `this` for that invocation, is with the `new` keyword:
+
+```js
+var point = {
+    // ..
+
+    init: function() { /* .. */ }
+
+    // ..
+};
+
+var anotherPoint = new point.init(3,4);
+
+anotherPoint.x;     // 3
+anotherPoint.y;     // 4
+```
+
+<Tip>
+This example has a bit of nuance to be explained. The `init: function() { .. }` form shown here -- specifically, a function expression assigned to a property -- is required for the function to be validly called with the `new` keyword. The concise method form of `init() { .. }` defines a function that *cannot* be called with `new`.
+</Tip>
+
+You've typically seen `new` used with `class` for creating instances. But as an underlying mechanism of the JS language, `new` is not inherently a `class` operation.
+
+In a sense, the `new` keyword hijacks a function and forces its behavior into a different mode than a normal invocation. Here are the 4 special steps that JS performs when a function is invoked with `new`:
+
+<Steps>
+  <Step title="Create a new object">
+    Create a brand new empty object, out of thin air.
+  </Step>
+  
+  <Step title="Link the prototype">
+    Link the `[[Prototype]]` of that new empty object to the function's `.prototype` object (see Chapter 2).
+  </Step>
+  
+  <Step title="Invoke with context">
+    Invoke the function with the `this` context set to that new empty object.
+  </Step>
+  
+  <Step title="Return the object">
+    If the function doesn't return its own object value explicitly (with a `return ..` statement), assume the function call should instead return the new object (from steps 1-3).
+  </Step>
+</Steps>
+
+<Warning>
+Step 4 implies that if you `new` invoke a function that *does* return its own object -- like `return { .. }`, etc -- then the new object from steps 1-3 is *not* returned. That's a tricky gotcha to be aware of, in that it effectively discards that new object before the program has a chance to receive and store a reference to it.
+</Warning>
+
+### Review This
+
+We've seen four rules for `this` context assignment in function calls. Let's put them in order of precedence:
+
+<Steps>
+  <Step title="New invocation">
+    Is the function invoked with `new`, creating and setting a *new* `this`?
+  </Step>
+  
+  <Step title="Explicit context">
+    Is the function invoked with `call(..)` or `apply(..)`, *explicitly* setting `this`?
+  </Step>
+  
+  <Step title="Implicit context">
+    Is the function invoked with an object reference at the call-site (e.g., `point.init(..)`), *implicitly* setting `this`?
+  </Step>
+  
+  <Step title="Default context">
+    If none of the above... are we in non-strict mode? If so, *default* the `this` to `globalThis`. But if in strict-mode, *default* the `this` to `undefined`.
+  </Step>
+</Steps>
+
+These rules, *in this order*, are how JS determines the `this` for a function invocation. If multiple rules match a call-site (e.g., `new point.init.call(..)`), the first rule from the list to match wins.
+
+## An Arrow Points Somewhere
+
+Everything I've asserted so far about `this` in functions, and how its determined based on the call-site, makes one giant assumption: that you're dealing with a *regular* function (or method).
+
+So what's an *irregular* function?!?
+
+Here's a real example of an `=>` arrow function:
+
+```js
+const clickHandler = evt =>
+    evt.target.matches("button") ?
+        this.theFormElem.submit() :
+        evt.stopPropagation();
+```
+
+For comparison sake, let me also show the non-arrow equivalent:
+
+```js
+const clickHandler = function(evt) {
+    evt.target.matches("button") ?
+        this.theFormElem.submit() :
+        evt.stopPropagation();
+};
+```
+
+Or if we went a bit old-school about it:
+
+```js
+function clickHandler(evt) {
+    evt.target.matches("button") ?
+        this.theFormElem.submit() :
+        evt.stopPropagation();
+}
+```
+
+What I really want to focus on is how each of these forms of the function will behave with respect to their `this` reference, and whether the first `=>` form differs from the others (hint: it does!).
+
+### Lexical This
+
+The name for this pattern, by the way, is "lexical this", meaning a `this` that behaves like a lexical scope variable instead of like a dynamic context binding.
+
+But it turns out JS has an easier way of performing the "lexical this" magic trick. Are you ready for the trick reveal!?
+
+The `=>` arrow function! Tada!
+
+That's right, the `=>` function is, unlike all other function forms, special, in that it's not special at all. Or, rather, that it doesn't define anything special for `this` behavior whatsoever.
+
+In an `=>` function, the `this` keyword... **is not a keyword**. It's absolutely no different from any other variable, like `context` or `happyFace` or `foobarbaz`.
+
+Let me illustrate *this* point more directly:
+
+```js
+function outer() {
+    console.log(this.value);
+
+    // define a return an "inner"
+    // function
+    var inner = () => {
+        console.log(this.value);
+    };
+
+    return inner;
+}
+
+var one = {
+    value: 42,
+};
+var two = {
+    value: "sad face",
+};
+
+var innerFn = outer.call(one);
+// 42
+
+innerFn.call(two);
+// 42   <-- not "sad face"
+```
+
+The `innerFn.call(two)` would, for any *regular* function definition, have resulted in `"sad face"` here. But since the `inner` function we defined and returned (and assigned to `innerFn`) was an *irregular* `=>` arrow function, it has no special `this` behavior, but instead has "lexical this" behavior.
+
+When the `innerFn(..)` (aka `inner(..)`) function is invoked, even with an *explicit context* assignment via `.call(..)`, that assignment is ignored.
+
+<Note>
+When a `this` is encountered (`this.value`) inside an `=>` arrow function, `this` is treated like a normal lexical variable, not a special keyword. And since there is no `this` variable in that function itself, JS does what it always does with lexical variables: it goes up one level of lexical scope -- in this case, to the surrounding `outer(..)` function, and it checks to see if there's any registered `this` in that scope.
+</Note>
+
+#### Back To The... Button
+
+A more direct and appropriate way of solving our earlier issue, where we had done `var context = this` to get a sort of faked "lexical this" behavior, is to use the `=>` arrow function, since its primary design feature is... "lexical this".
+
+```js
+this.submitBtn.addEventListener(
+    "click",
+    evt => this.clickHandler(evt),
+    false
+);
+```
+
+Boom! Problem solved! Mic drop!
+
+<Tip>
+Hear me on *this*: the `=>` arrow function is *not* -- I repeat, *not* -- about typing fewer characters. The primary point of the `=>` function being added to JS was to give us "lexical this" behavior without having to resort to `var context = this` (or worse, `var self = this`) style hacks.
+
+If you need "lexical this", always prefer an `=>` arrow function. If you don't need "lexical this", well... the `=>` arrow function might not be the best tool for the job.
+</Tip>
+
+### This Is Bound To Come Up
+
+Backing up a bit, there's another option if you don't want to use an `=>` arrow function's "lexical this" behavior to address the button event handler functionality.
+
+In addition to `call(..)` / `apply(..)` -- these invoke functions, remember! -- JS functions also have a third utility built in, called `bind(..)` -- which does *not* invoke the function, just to be clear.
+
+The `bind(..)` utility defines a *new* wrapped/bound version of a function, where its `this` is preset and fixed, and cannot be overridden with a `call(..)` or `apply(..)`, or even an *implicit context* object at the call-site:
+
+```js
+this.submitBtn.addEventListener(
+    "click",
+    this.clickHandler.bind(this),
+    false
+);
+```
+
+Since I'm passing in a `this`-bound function as the event handler, it similarly doesn't matter how that utility tries to set a `this`, because I've already forced the `this` to be what I wanted: the value of `this` from the surrounding function invocation context.
+
+#### Hardly New
+
+This pattern is often referred to as "hard binding", since we're creating a function reference that is strongly bound to a particular `this`. A lot of JS writings have claimed that the `=>` arrow function is essentially just syntax for the `bind(this)` hard-binding. It's not.
+
+Let me illustrate:
+
+```js
+// candidate implementation, for comparison
+function fakeBind(fn,context) {
+    return (...args) => fn.apply(context,args);
+}
+
+// test subject
+function thisAwareFn() {
+    console.log(`Value: ${this.value}`);
+}
+
+// control data
+var obj = {
+    value: 42,
+};
+
+// experiment
+var f = thisAwareFn.bind(obj);
+var g = fakeBind(thisAwareFn,obj);
+
+f();            // Value: 42
+g();            // Value: 42
+
+new f();        // Value: undefined
+new g();        // <--- ???
+```
+
+First, look at the `new f()` call. That's admittedly a strange usage, to call `new` on a hard-bound function. Even though `f()` was hard-bound to a `this` context of `obj`, the `new` operator was able to hijack the hard-bound function's `this` and re-bind it to the newly created and empty object.
+
+But... what's going to happen with the `new g()` call, which is invoking `new` on the returned `=>` arrow function?
+
+That line will actually throw an exception, because an `=>` function cannot be used with the `new` keyword.
+
+But why? My best answer is that conceptually and actually, an `=>` arrow function is not a function with a hard-bound `this`, it's a function that has no `this` at all. As such, `new` makes no sense against such a function, so JS just disallows it.
+
+<Warning>
+The main point is: an `=>` arrow function is *not* a syntactic form of `bind(this)`.
+</Warning>
+
+## Why *This*?
+
+So why have I belabored *this* subject for an entire chapter?
+
+Because understanding `this` is fundamental to understanding how objects work together in JavaScript. The `this` mechanism, paired with `[[Prototype]]` delegation, gives us tremendous flexibility in how we structure and compose our programs.
+
+But with that flexibility comes responsibility. You need to understand how `this` works, how it's assigned, and when to use it (and when not to).
+
+In the next chapter, we'll see how `this` pairs with prototypes to create another pattern of code organization: delegation.

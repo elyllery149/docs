@@ -1,0 +1,90 @@
+---
+title: Types & Grammar
+description: Understanding JavaScript's type system, primitive values, coercion, and how to write type-aware code
+---
+
+<Note>
+This book is currently a **work in progress**. Content is being actively developed and refined.
+</Note>
+
+# You Don't Know JS Yet: Types & Grammar - 2nd Edition
+
+Welcome to the **Types & Grammar** book, part of the *You Don't Know JS Yet* series. This book dives deep into JavaScript's type system, exploring how values behave and interact in ways that many developers never fully understand.
+
+## What You'll Learn
+
+This book confronts the common misconception that "everything in JS is an object" and explores the core value types of JavaScript, specifically the non-object types called **primitives**.
+
+<CardGroup cols={2}>
+  <Card title="Primitive Values" icon="hashtag" href="/types-grammar/ch1">
+    Explore the 7 primitive types: undefined, null, boolean, number, bigint, symbol, and string
+  </Card>
+  <Card title="Primitive Behaviors" icon="wand-magic-sparkles" href="/types-grammar/ch2">
+    Learn how primitives behave, their immutability, and type-specific operations
+  </Card>
+  <Card title="Object Values" icon="box" href="/types-grammar/ch3">
+    Understand objects, arrays, functions, and the difference between primitives and objects
+  </Card>
+  <Card title="Coercing Values" icon="arrows-spin" href="/types-grammar/ch4">
+    Master type coercion, both explicit and implicit, and write type-aware code
+  </Card>
+</CardGroup>
+
+## Key Topics Covered
+
+<AccordionGroup>
+  <Accordion title="Understanding Value Types">
+    JavaScript doesn't apply types to variables or properties ("container types"), but rather values themselves have types ("value types"). Learn the fundamental distinction and why it matters.
+  </Accordion>
+  
+  <Accordion title="The typeof Operator">
+    Master the `typeof` operator and understand its quirks, including why `typeof null` returns `"object"` (spoiler: it's a historical bug that can't be fixed).
+  </Accordion>
+  
+  <Accordion title="Coercion: Friend or Foe?">
+    Challenge the common belief that coercion is "bad" and learn when and how to use it effectively. Discover why `==` might be better than `===` in many cases.
+  </Accordion>
+  
+  <Accordion title="IEEE-754 and Number Precision">
+    Understand how JavaScript represents numbers using IEEE-754 double-precision floating-point format, and learn to handle precision issues.
+  </Accordion>
+  
+  <Accordion title="Unicode in Strings">
+    Navigate the complexities of Unicode, including surrogate pairs, grapheme clusters, and why string length calculations aren't always straightforward.
+  </Accordion>
+</AccordionGroup>
+
+## Why This Matters
+
+<Warning>
+**Type-aware programming is always better than type-ignorant programming.**
+
+Contrary to popular belief, embracing a dynamically-typed language does NOT mean being careless about types. Whether you use TypeScript or vanilla JavaScript, understanding how types actually work is essential.
+</Warning>
+
+## About This Book
+
+This is the second edition of "Types & Grammar," completely rewritten to reflect modern JavaScript and deeper insights into the language's type system. The book takes a controversial stance: coercion isn't the enemy. With proper understanding, JavaScript's type system becomes a powerful tool rather than a source of bugs.
+
+<Tip>
+This book is part of a larger series that covers JavaScript comprehensively:
+- **Get Started** - Your foundation
+- **Scope & Closures** - How variables work
+- **Objects & Classes** - Object-oriented programming
+- **Types & Grammar** - This book
+- **Sync & Async** - Asynchronous programming
+- **ES.Next & Beyond** - Future JavaScript
+</Tip>
+
+## Getting Started
+
+Ready to challenge your assumptions about JavaScript's type system? Start with [Chapter 1: Primitive Values](/types-grammar/ch1) and prepare to see JavaScript in a whole new light.
+
+<CardGroup cols={2}>
+  <Card title="Read the Foreword" icon="book-open" href="/types-grammar/foreword">
+    Start with the foreword to set the context
+  </Card>
+  <Card title="Jump to Chapter 1" icon="rocket" href="/types-grammar/ch1">
+    Dive right into primitive values
+  </Card>
+</CardGroup>

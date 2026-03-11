@@ -1,0 +1,323 @@
+---
+title: "Chapter 5: The (Not So) Secret Lifecycle of Variables"
+description: "Explore hoisting, the Temporal Dead Zone (TDZ), variable re-declaration, and understand when variables become available in their scope."
+---
+
+By now you should have a decent grasp of the nesting of scopes, from the global scope downward—called a program's scope chain.
+
+But just knowing which scope a variable comes from is only part of the story. If a variable declaration appears past the first statement of a scope, how will any references to that identifier *before* the declaration behave? What happens if you try to declare the same variable twice in a scope?
+
+JS's particular flavor of lexical scope is rich with nuance in how and when variables come into existence and become available to the program.
+
+## When Can I Use a Variable?
+
+At what point does a variable become available to use within its scope? There may seem to be an obvious answer: *after* the variable has been declared/created. Right? Not quite.
+
+Consider:
+
+```javascript
+greeting();
+// Hello!
+
+function greeting() {
+    console.log("Hello!");
+}
+```
+
+This code works fine. But did you ever wonder how or why it works? Specifically, why can you access the identifier `greeting` from line 1 (to retrieve and execute a function reference), even though the `greeting()` function declaration doesn't occur until line 4?
+
+### Hoisting
+
+The term most commonly used for a variable being visible from the beginning of its enclosing scope, even though its declaration may appear further down in the scope, is called **hoisting**.
+
+<Note>
+Every identifier is *created* at the beginning of the scope it belongs to, **every time that scope is entered**.
+</Note>
+
+But hoisting alone doesn't fully answer the question. We can see an identifier called `greeting` from the beginning of the scope, but why can we **call** the `greeting()` function before it's been declared?
+
+The answer is a special characteristic of formal `function` declarations, called *function hoisting*. When a `function` declaration's name identifier is registered at the top of its scope, it's additionally auto-initialized to that function's reference.
+
+One key detail is that both *function hoisting* and `var`-flavored *variable hoisting* attach their name identifiers to the nearest enclosing **function scope** (or, if none, the global scope), not a block scope.
+
+<Note>
+Declarations with `let` and `const` still hoist. But these two declaration forms attach to their enclosing block rather than just an enclosing function as with `var` and `function` declarations.
+</Note>
+
+### Hoisting: Declaration vs. Expression
+
+*Function hoisting* only applies to formal `function` declarations, not to `function` expression assignments. Consider:
+
+```javascript
+greeting();
+// TypeError
+
+var greeting = function greeting() {
+    console.log("Hello!");
+};
+```
+
+Line 1 throws an error. But the *kind* of error thrown is very important to notice. A `TypeError` means we're trying to do something with a value that is not allowed.
+
+Notice that the error is **not** a `ReferenceError`. JS isn't telling us that it couldn't find `greeting` as an identifier in the scope. It's telling us that `greeting` was found but doesn't hold a function reference at that moment.
+
+What does `greeting` hold? In addition to being hoisted, variables declared with `var` are also automatically initialized to `undefined` at the beginning of their scope. So on that first line, `greeting` exists, but it holds only the default `undefined` value.
+
+<Note>
+A `function` declaration is hoisted **and initialized to its function value** (called *function hoisting*). A `var` variable is also hoisted, and then auto-initialized to `undefined`. Any subsequent `function` expression assignments to that variable don't happen until that assignment is processed during runtime execution.
+</Note>
+
+### Variable Hoisting
+
+Let's look at another example of *variable hoisting*:
+
+```javascript
+greeting = "Hello!";
+console.log(greeting);
+// Hello!
+
+var greeting = "Howdy!";
+```
+
+Though `greeting` isn't declared until line 5, it's available to be assigned to as early as line 1. Why?
+
+There's two necessary parts to the explanation:
+- The identifier is hoisted
+- **And** it's automatically initialized to the value `undefined` from the top of the scope
+
+## Hoisting: Yet Another Metaphor
+
+Rather than hoisting being a concrete execution step the JS engine performs, it's more useful to think of hoisting as a visualization of various actions JS takes in setting up the program **before execution**.
+
+The typical assertion of what hoisting means: *lifting*—like lifting a heavy weight upward—any identifiers all the way to the top of a scope. The explanation often asserted is that the JS engine will actually *rewrite* that program before execution.
+
+<Warning>
+Incorrect or incomplete mental models often still seem sufficient because they can occasionally lead to accidental right answers. But in the long run it's harder to accurately analyze and predict outcomes if your thinking isn't particularly aligned with how the JS engine works.
+</Warning>
+
+I assert that hoisting *should* be used to refer to the **compile-time operation** of generating runtime instructions for the automatic registration of a variable at the beginning of its scope, each time that scope is entered.
+
+## Re-declaration?
+
+What do you think happens when a variable is declared more than once in the same scope? Consider:
+
+```javascript
+var studentName = "Frank";
+console.log(studentName);
+// Frank
+
+var studentName;
+console.log(studentName);   // ???
+```
+
+What do you expect to be printed for that second message? Many believe the second `var studentName` has re-declared the variable (and thus "reset" it), so they expect `undefined` to be printed.
+
+But is there such a thing as a variable being "re-declared" in the same scope? No.
+
+Since hoisting is actually about registering a variable at the beginning of a scope, there's nothing to be done in the middle of the scope where the original program actually had the second `var studentName` statement. It's just a no-op(eration), a pointless statement.
+
+<Tip>
+In the style of the conversation narrative from Chapter 2, *Compiler* would find the second `var` declaration statement and ask the *Scope Manager* if it had already seen a `studentName` identifier; since it had, there wouldn't be anything else to do.
+</Tip>
+
+It's also important to point out that `var studentName;` doesn't mean `var studentName = undefined;`. Let's prove they're different:
+
+```javascript
+var studentName = "Frank";
+console.log(studentName);   // Frank
+
+var studentName;
+console.log(studentName);   // Frank <--- still!
+
+// let's add the initialization explicitly
+var studentName = undefined;
+console.log(studentName);   // undefined <--- see!?
+```
+
+What about repeating a declaration within a scope using `let` or `const`?
+
+```javascript
+let studentName = "Frank";
+
+console.log(studentName);
+
+let studentName = "Suzy";
+```
+
+This program will not execute, but instead immediately throw a `SyntaxError`. The error message will indicate something like: "studentName has already been declared." In other words, this is a case where attempted "re-declaration" is explicitly not allowed!
+
+<Note>
+This is really more of a "social engineering" issue. "Re-declaration" of variables is seen by some, including many on the TC39 body, as a bad habit that can lead to program bugs. So when ES6 introduced `let`, they decided to prevent "re-declaration" with an error.
+</Note>
+
+### Constants?
+
+The `const` keyword is more constrained than `let`. Like `let`, `const` cannot be repeated with the same identifier in the same scope. But there's actually an overriding technical reason why that sort of "re-declaration" is disallowed.
+
+The `const` keyword requires a variable to be initialized:
+
+```javascript
+const empty;   // SyntaxError
+```
+
+`const` declarations create variables that cannot be re-assigned:
+
+```javascript
+const studentName = "Frank";
+console.log(studentName);
+// Frank
+
+studentName = "Suzy";   // TypeError
+```
+
+<Warning>
+The error thrown when re-assigning `studentName` is a `TypeError`, not a `SyntaxError`. Syntax errors represent faults in the program that stop it from even starting execution. Type errors represent faults that arise during program execution.
+</Warning>
+
+### Loops
+
+So it's clear from our previous discussion that JS doesn't really want us to "re-declare" our variables within the same scope. That probably seems straightforward, until you consider what it means for repeated execution of declaration statements in loops:
+
+```javascript
+var keepGoing = true;
+while (keepGoing) {
+    let value = Math.random();
+    if (value > 0.5) {
+        keepGoing = false;
+    }
+}
+```
+
+Is `value` being "re-declared" repeatedly in this program? Will we get errors thrown? No.
+
+All the rules of scope (including "re-declaration" of `let`-created variables) are applied *per scope instance*. In other words, each time a scope is entered during execution, everything resets.
+
+<Note>
+Each loop iteration is its own new scope instance, and within each scope instance, `value` is only being declared once. So there's no attempted "re-declaration," and thus no error.
+</Note>
+
+What about "re-declaration" with other loop forms, like `for`-loops?
+
+```javascript
+for (let i = 0; i < 3; i++) {
+    let value = i * 10;
+    console.log(`${ i }: ${ value }`);
+}
+// 0: 0
+// 1: 10
+// 2: 20
+```
+
+It should be clear that there's only one `value` declared per scope instance. But what about `i`?
+
+To answer that, consider what scope `i` is in. It might seem like it would be in the outer scope, but it's not. It's in the scope of the `for`-loop body, just like `value` is.
+
+The `i` and `value` variables are both declared exactly once **per scope instance**. No "re-declaration."
+
+## Uninitialized Variables (aka, TDZ)
+
+With `var` declarations, the variable is "hoisted" to the top of its scope. But it's also automatically initialized to the `undefined` value, so that the variable can be used throughout the entire scope.
+
+However, `let` and `const` declarations are not quite the same in this respect.
+
+Consider:
+
+```javascript
+console.log(studentName);
+// ReferenceError
+
+let studentName = "Suzy";
+```
+
+The result of this program is that a `ReferenceError` is thrown on the first line. The error message may say something like: "Cannot access studentName before initialization."
+
+<Note>
+The error message used to be much more vague or misleading. Thankfully, several in the community were successfully able to lobby for JS engines to improve this error message!
+</Note>
+
+That error message is quite indicative of what's wrong: `studentName` exists on line 1, but it's not been initialized, so it cannot be used yet.
+
+For `let`/`const`, the **only way** to initialize an uninitialized variable is with an assignment attached to a declaration statement:
+
+```javascript
+let studentName = "Suzy";
+console.log(studentName);   // Suzy
+```
+
+Alternatively:
+
+```javascript
+let studentName;
+// or:
+// let studentName = undefined;
+
+studentName = "Suzy";
+
+console.log(studentName);
+// Suzy
+```
+
+The term coined by TC39 to refer to this *period of time* from the entering of a scope to where the auto-initialization of the variable occurs is: **Temporal Dead Zone (TDZ)**.
+
+The TDZ is the time window where a variable exists but is still uninitialized, and therefore cannot be accessed in any way. Only the execution of the instructions left by *Compiler* at the point of the original declaration can do that initialization.
+
+A `var` also technically has a TDZ, but it's zero in length and thus unobservable to our programs! Only `let` and `const` have an observable TDZ.
+
+<Tip>
+By the way, "temporal" in TDZ does indeed refer to *time* not *position in code*.
+</Tip>
+
+### TDZ Errors
+
+Consider:
+
+```javascript
+askQuestion();
+// ReferenceError
+
+let studentName = "Suzy";
+
+function askQuestion() {
+    console.log(`${ studentName }, do you know?`);
+}
+```
+
+Even though positionally the `console.log(..)` referencing `studentName` comes *after* the `let studentName` declaration, timing wise the `askQuestion()` function is invoked *before* the `let` statement is encountered, while `studentName` is still in its TDZ! Hence the error.
+
+There's a common misconception that TDZ means `let` and `const` do not hoist. This is inaccurate. They definitely hoist.
+
+Let's prove that `let` and `const` *do* hoist (auto-register at the top of the scope), courtesy of our friend shadowing:
+
+```javascript
+var studentName = "Kyle";
+
+{
+    console.log(studentName);
+    // ???
+
+    // ..
+
+    let studentName = "Suzy";
+
+    console.log(studentName);
+    // Suzy
+}
+```
+
+What's going to happen with the first `console.log(..)` statement? If `let studentName` didn't hoist to the top of the scope, then the first `console.log(..)` *should* print `"Kyle"`, right?
+
+But instead, the first `console.log(..)` throws a TDZ error, because in fact, the inner scope's `studentName` **was** hoisted (auto-registered at the top of the scope). What **didn't** happen (yet!) was the auto-initialization of that inner `studentName`; it's still uninitialized at that moment, hence the TDZ violation!
+
+<Tip>
+How can you avoid TDZ errors? My advice: always put your `let` and `const` declarations at the top of any scope. Shrink the TDZ window to zero (or near zero) length, and then it'll be moot.
+</Tip>
+
+## Finally Initialized
+
+Working with variables has much more nuance than it seems at first glance. *Hoisting*, *(re)declaration*, and the *TDZ* are common sources of confusion for developers, especially those who have worked in other languages before coming to JS.
+
+Hoisting is generally cited as an explicit mechanism of the JS engine, but it's really more a metaphor to describe the various ways JS handles variable declarations during compilation. Even as a metaphor, hoisting offers useful structure for thinking about the life-cycle of a variable.
+
+Declaration and re-declaration of variables tend to cause confusion when thought of as runtime operations. But if you shift to compile-time thinking for these operations, the quirks diminish.
+
+The TDZ (temporal dead zone) error is strange and frustrating when encountered. Fortunately, TDZ is relatively straightforward to avoid if you're always careful to place `let`/`const` declarations at the top of any scope.

@@ -1,0 +1,742 @@
+---
+title: 'Chapter 2: Primitive Behaviors'
+description: Understanding how primitive values behave in JavaScript, including immutability, string operations, and number behaviors
+---
+
+<Note>
+This book is currently a **work in progress**. Content is being actively developed.
+</Note>
+
+# Chapter 2: Primitive Behaviors
+
+So far, we've explored seven built-in primitive value types in JS: `null`, `undefined`, `boolean`, `string`, `number`, `bigint`, and `symbol`.
+
+Chapter 1 was quite a lot to take in. Once you're ready to move on, let's dig into certain behaviors implied by value types for all their respective values.
+
+## Primitive Immutability
+
+All primitive values are immutable, meaning nothing in a JS program can reach into the contents of the value and modify it in any way.
+
+```javascript
+myAge = 42;
+
+// later:
+myAge = 43;  // Doesn't modify 42, creates new binding to 43
+```
+
+The `myAge = 43` statement doesn't change the value `42`. It reassigns a different value `43` to `myAge`, completely replacing the previous value.
+
+New values are also created through various operations:
+
+```javascript
+42 + 1;             // 43 (new value)
+"Hello" + "!";      // "Hello!" (new value)
+```
+
+Even a string value is immutable:
+
+```javascript
+greeting = "Hello.";
+greeting[5] = "!";
+console.log(greeting);      // Hello.
+```
+
+<Warning>
+In non-strict mode, assigning to a read-only property (like `greeting[5]`) silently fails. In strict-mode, the disallowed assignment will throw an exception.
+</Warning>
+
+<Tip>
+The nature of primitive values being immutable is NOT affected by how the variable is declared (`const`, `let`, or `var`). `const` doesn't create immutable values — it declares variables that cannot be reassigned.
+</Tip>
+
+### Primitives With Properties?
+
+Properties cannot be added to any primitive values:
+
+```javascript
+greeting = "Hello.";
+greeting.isRendered = true;
+greeting.isRendered;        // undefined
+```
+
+However, properties CAN be accessed on all non-nullish primitive values. For example, all string values have a read-only `length` property:
+
+```javascript
+greeting = "Hello.";
+greeting.length;            // 6
+```
+
+<Note>
+As mentioned in Chapter 1, these property/method accesses on primitive values are facilitated by an implicit coercive behavior called *auto-boxing*. We'll cover this in detail in "Automatic Objects" in Chapter 3.
+</Note>
+
+## Primitive Assignments
+
+Any assignment of a primitive value from one variable/container to another is a *value-copy*:
+
+```javascript
+myAge = 42;
+yourAge = myAge;        // assigned by value-copy
+
+myAge;                  // 42
+yourAge;                // 42
+```
+
+Here, the `myAge` and `yourAge` variables each have their own copy of the number value `42`.
+
+If we later reassign `myAge`:
+
+```javascript
+myAge++;            // myAge = myAge + 1
+
+myAge;              // 43
+yourAge;            // 42 (unchanged)
+```
+
+## String Behaviors
+
+String values have a number of specific behaviors that every JS developer should be aware of.
+
+### String Character Access
+
+Though strings are not actually arrays, JS allows `[ ]` array-style access of a character at a numeric (`0`-based) index:
+
+```javascript
+greeting = "Hello!";
+greeting[4];            // "o"
+greeting["4"];          // "o" (coerced to number)
+```
+
+### Character Iteration
+
+Strings are iterables, which means the characters (code-units) can be iterated individually:
+
+```javascript
+myName = "Kyle";
+
+for (let char of myName) {
+    console.log(char);
+}
+// K
+// y
+// l
+// e
+
+chars = [...myName];
+chars;              // ["K", "y", "l", "e"]
+```
+
+Values like strings and arrays are iterables because they expose an iterator-producing method at the special symbol property location `Symbol.iterator`:
+
+```javascript
+myName = "Kyle";
+it = myName[Symbol.iterator]();
+
+it.next();      // { value: "K", done: false }
+it.next();      // { value: "y", done: false }
+it.next();      // { value: "l", done: false }
+it.next();      // { value: "e", done: false }
+it.next();      // { value: undefined, done: true }
+```
+
+### Length Computation
+
+The reported `length` value somewhat corresponds to the number of characters in the string, but it's more complex when Unicode characters are involved.
+
+<AccordionGroup>
+  <Accordion title="Basic Length">
+    Most standard characters: one character = one code-point = one code-unit:
+    
+    ```javascript
+    "Hello".length;     // 5
+    ```
+  </Accordion>
+  
+  <Accordion title="Unicode Normalization">
+    Characters like `"é"` can be stored as composed or decomposed:
+    
+    ```javascript
+    eTilde1 = "é";              // composed
+    eTilde2 = "\u00e9";         // composed
+    eTilde3 = "\u0065\u0301";   // decomposed (e + combining tilde)
+    
+    eTilde1.length;             // 1
+    eTilde2.length;             // 1
+    eTilde3.length;             // 2 (two code-units!)
+    
+    // Normalize to composed form:
+    favoriteItem = "teléfono";
+    favoriteItem.length;                        // 9 (uh oh!)
+    favoriteItem.normalize("NFC").length;       // 8 (fixed!)
+    ```
+  </Accordion>
+  
+  <Accordion title="Surrogate Pairs">
+    Extended Unicode characters above code-point 65535 need surrogate pairs:
+    
+    ```javascript
+    oldTelephone = "☎";         // U+260E (BMP)
+    oldTelephone.length;        // 1
+    
+    cellphone = "📱";            // U+1F4F1 (needs surrogate pair)
+    cellphone.length;           // 2 (two code-units!)
+    
+    // Use iteration to get correct length:
+    [...cellphone].length;      // 1 (correct!)
+    ```
+  </Accordion>
+  
+  <Accordion title="Grapheme Clusters">
+    Multiple code-points can cluster into single visual symbols:
+    
+    ```javascript
+    thumbsDown = "👎🏾";         // thumbs-down + skin-tone modifier
+    
+    thumbsDown.length;          // 4 (oops!)
+    [...thumbsDown].length;     // 2 (still not ideal)
+    
+    // True grapheme length requires complex Unicode rendering logic
+    ```
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+Counting the *length* of a string to match our human intuitions is remarkably challenging. Many emoji and international characters don't count as you'd expect. Libraries exist for handling some of this logic, but they're often large and not necessarily perfect.
+</Warning>
+
+### Internationalization (i18n) and Localization (l10n)
+
+JS programs can operate in any international language/culture context using the ECMAScript Internationalization API.
+
+<Steps>
+  <Step title="Locale-Aware Sorting">
+    Use `Intl.Collator` for locale-specific string comparison:
+    
+    ```javascript
+    germanStringSorter = new Intl.Collator("de");
+    
+    germanStringSorter.compare("Hallo", "Welt");
+    // -1 (Hallo comes before Welt)
+    
+    // In German, Z and z are different:
+    germanStringSorter.compare("Z", "z");       // 1
+    
+    // Unless we specify case sensitivity:
+    caseFirstSorter = new Intl.Collator("de", { caseFirst: "upper" });
+    caseFirstSorter.compare("Z", "z");          // -1
+    ```
+  </Step>
+  
+  <Step title="Right-to-Left (RTL) Languages">
+    Languages like Hebrew and Arabic use RTL ordering:
+    
+    ```javascript
+    hebrewHello = "\u{5e9}\u{5dc}\u{5d5}\u{5dd}";
+    console.log(hebrewHello);           // שלום
+    
+    // First character in logical order (position 0):
+    hebrewHello[0];                     // "ש" (rightmost when rendered)
+    ```
+    
+    Index-positional access follows logical position, not rendered position.
+  </Step>
+  
+  <Step title="Word Segmentation">
+    Use `Intl.Segmenter` to segment multi-word strings:
+    
+    ```javascript
+    arabicHelloWorld = "\u{645}\u{631}\u{62d}\u{628}\u{627} \
+    \u{628}\u{627}\u{644}\u{639}\u{627}\u{644}\u{645}";
+    
+    arabicSegmenter = new Intl.Segmenter("ar", { granularity: "word" });
+    
+    for (let {segment: word, isWordLike} of 
+         arabicSegmenter.segment(arabicHelloWorld)) {
+        if (isWordLike) {
+            console.log(word);
+        }
+    }
+    // مرحبا
+    // بالعالم
+    ```
+  </Step>
+</Steps>
+
+### String Comparison
+
+String values can be compared for both equality and relational ordering.
+
+#### String Equality
+
+The `===` and `==` operators are the most common way to compare strings:
+
+```javascript
+"my name" === "my n\x61me";               // true
+
+"my name" !== String.raw`my n\x61me`;     // true (escape not processed)
+```
+
+<Note>
+The `===` operator (strict equality) first checks if the types match. If they do, it checks if the values are the same via per-code-unit comparison.
+
+The `==` operator (coercive equality) performs type coercion if the types don't match. If both operands are already strings, `==` just hands off to `===`.
+</Note>
+
+##### Really Strict Equality
+
+In addition to `==` and `===`, JS provides `Object.is()`:
+
+```javascript
+Object.is("42", 42);             // false
+Object.is("42", "\x34\x32");     // true
+```
+
+<Tip>
+I half-jokingly think of `Object.is()` as a `====` (fourth `=` added) operator, for the really-truly-strict-no-exceptions kind of equality checking!
+
+For strings, `===` is extremely predictable with no weird exceptions. I recommend using `==` or `===` for string checks, and reserve `Object.is()` for corner cases with numbers.
+</Tip>
+
+#### String Relational Comparisons
+
+The `<`, `<=`, `>`, and `>=` operators compare strings lexicographically (like dictionary order):
+
+```javascript
+"hello" < "world";          // true
+```
+
+<Warning>
+These operators are always coercive when types don't match. The only way to do a relational comparison with strings is to ensure both operands are already string values.
+</Warning>
+
+Be careful with numeric-looking strings:
+
+```javascript
+"100" < "11";               // true (lexicographic ordering!)
+```
+
+Numerically, `100` is greater than `11`. But in lexicographic ordering, the second `"0"` character (in `"100"`) comes before the second `"1"` (in `"11"`).
+
+##### Locale-Aware Relational Comparisons
+
+Use `localeCompare()` for locale-specific comparisons:
+
+```javascript
+"hello".localeCompare("world");                      // -1 (negative)
+"world".localeCompare("hello", "en");                // 1 (positive)
+"hello".localeCompare("hello", "en", 
+                      {ignorePunctuation: true});    // 0
+
+// In German, ä sorts before z:
+"ä".localeCompare("z", "de");                        // -1
+
+// In Swedish, ä sorts after z:
+"ä".localeCompare("z", "sv");                        // 1
+```
+
+Using with array sorting:
+
+```javascript
+studentNames = ["Lisa", "Kyle", "Jason"];
+
+// Using localeCompare:
+studentNames.sort((name1, name2) => name1.localeCompare(name2));
+// ["Jason", "Kyle", "Lisa"]
+
+// Using Intl.Collator (more performant for many strings):
+nameSorter = new Intl.Collator("en");
+studentNames.sort(nameSorter.compare);
+// ["Jason", "Kyle", "Lisa"]
+```
+
+### String Concatenation
+
+Two or more string values can be concatenated using the `+` operator:
+
+```javascript
+greeting = "Hello, " + "Kyle!";
+greeting;               // Hello, Kyle!
+```
+
+If one operand is a string and the other is not, the non-string is coerced to its string representation:
+
+```javascript
+userCount = 7;
+status = "There are " + userCount + " users online";
+status;         // There are 7 users online
+```
+
+<Tip>
+Template literals are generally more preferred for string interpolation:
+
+```javascript
+userCount = 7;
+status = `There are ${userCount} users online`;
+status;         // There are 7 users online
+```
+</Tip>
+
+### String Value Methods
+
+String values provide a variety of methods:
+
+<AccordionGroup>
+  <Accordion title="Character Access">
+    - `charAt(index)` - Returns character at index
+    - `at(index)` - Like charAt, but supports negative indices
+    - `charCodeAt(index)` - Returns numeric code-unit
+    - `codePointAt(index)` - Returns whole code-point
+  </Accordion>
+  
+  <Accordion title="Extracting Substrings">
+    - `substr(start, length)` - Extract substring (deprecated)
+    - `substring(start, end)` - Extract substring
+    - `slice(start, end)` - Extract substring (supports negative indices)
+  </Accordion>
+  
+  <Accordion title="Case Conversion">
+    - `toUpperCase()` - Convert to uppercase
+    - `toLowerCase()` - Convert to lowercase
+    - `toLocaleUpperCase()` - Locale-aware uppercase
+    - `toLocaleLowerCase()` - Locale-aware lowercase
+  </Accordion>
+  
+  <Accordion title="Searching">
+    - `indexOf(searchString, position)` - Find index of substring
+    - `lastIndexOf(searchString, position)` - Find last index
+    - `includes(searchString, position)` - Boolean check
+    - `search(regexp)` - Search with regular expression
+    - `startsWith(searchString)` - Check if starts with
+    - `endsWith(searchString)` - Check if ends with
+  </Accordion>
+  
+  <Accordion title="Manipulation">
+    - `concat(...strings)` - Concatenate strings
+    - `repeat(count)` - Repeat string n times
+    - `trim()` - Remove whitespace from both ends
+    - `trimStart()` / `trimEnd()` - Remove whitespace from one end
+    - `padStart(length, padString)` - Pad start to length
+    - `padEnd(length, padString)` - Pad end to length
+  </Accordion>
+  
+  <Accordion title="Advanced">
+    - `split(separator)` - Split into array
+    - `match(regexp)` - Match against regular expression
+    - `matchAll(regexp)` - Get all matches
+    - `replace(pattern, replacement)` - Replace occurrences
+    - `normalize(form)` - Unicode normalization
+    - `localeCompare(compareString, locales, options)` - Locale-aware comparison
+  </Accordion>
+</AccordionGroup>
+
+```javascript
+"all these letters".toUpperCase();      // ALL THESE LETTERS
+
+greeting = "Hello!";
+greeting.repeat(2);                     // Hello!Hello!
+greeting;                               // Hello! (original unchanged)
+```
+
+### Static String Helpers
+
+The following utilities are provided directly on the `String` object:
+
+- `String.fromCharCode(...codes)` - Create string from code-units
+- `String.fromCodePoint(...codePoints)` - Create string from code-points
+- `String.raw(template, ...substitutions)` - Template tag for raw strings
+
+Most values can be explicitly coerced to strings:
+
+```javascript
+String(true);           // "true"
+String(42);             // "42"
+String(Infinity);       // "Infinity"
+String(undefined);      // "undefined"
+```
+
+## Number Behaviors
+
+Numbers are used for a variety of tasks, but mostly for mathematical computations.
+
+### Floating Point Imprecision
+
+One classic gotcha of any IEEE-754 number system — NOT UNIQUELY JS — is that not all operations and values can fit neatly into the IEEE-754 representations:
+
+```javascript
+point3a = 0.1 + 0.2;
+point3b = 0.3;
+
+point3a;                        // 0.30000000000000004
+point3b;                        // 0.3
+
+point3a === point3b;            // false (oops!)
+```
+
+<Warning>
+This behavior is **NOT IN ANY WAY** unique to JS. This is exactly how any IEEE-754 conforming programming language will work. The temptation to make fun of JS for `0.1 + 0.2 !== 0.3` is strong, but it's completely bogus.
+</Warning>
+
+#### Epsilon Threshold
+
+A common piece of advice uses the `Number.EPSILON` value:
+
+```javascript
+Number.EPSILON;                 // 2.220446049250313e-16
+
+function safeNumberEquals(a, b) {
+    return Math.abs(a - b) < Number.EPSILON;
+}
+
+point3a = 0.1 + 0.2;
+point3b = 0.3;
+
+safeNumberEquals(point3a, point3b);      // true
+```
+
+<Warning>
+This approach isn't actually safe:
+
+```javascript
+point3a = 10.1 + 0.2;
+point3b = 10.3;
+
+safeNumberEquals(point3a, point3b);      // false :(
+```
+
+`Number.EPSILON` only works as an error threshold for certain small numbers. For other cases, it's far too small and yields false negatives.
+</Warning>
+
+<Tip>
+**Better approaches:**
+1. Avoid floating-point by scaling to integers (do math, then scale back for display)
+2. Use an arbitrary precision decimal library
+3. Do math in another environment that's not based on IEEE-754
+</Tip>
+
+### Numeric Comparison
+
+#### Numeric Equality
+
+Just like strings, equality comparisons for numbers use `==` / `===` or `Object.is()`:
+
+```javascript
+42 == 42;                   // true
+42 === 42;                  // true
+42 == 43;                   // false
+
+Object.is(42, 42);          // true
+Object.is(42, 43);          // false
+```
+
+For coercive equality, if either operand is not a string, `==` prefers numeric comparison:
+
+```javascript
+42 == "42";                 // true (string coerced to number)
+```
+
+<Warning>
+Two frustrating exceptions in numeric equality (both `==` and `===`):
+
+```javascript
+NaN === NaN;                // false (ugh!)
+-0 === 0;                   // true (ugh!)
+```
+
+For these cases, use `Object.is()` or `Number.isNaN()`:
+
+```javascript
+Object.is(NaN, NaN);        // true
+Object.is(-0, 0);           // false
+Number.isNaN(NaN);          // true
+```
+</Warning>
+
+#### Numeric Relational Comparisons
+
+The relational operators work with numbers as expected:
+
+```javascript
+41 < 42;                    // true
+0.1 + 0.2 > 0.3;            // true (due to IEEE-754)
+```
+
+Remember: like `==`, the `<` and `>` operators are also coercive. Ensure both operands are numbers to avoid coercion.
+
+### Mathematical Operators
+
+The basic arithmetic operators are `+`, `-`, `*`, `/`, `**` (exponentiation), and `%` (modulo):
+
+```javascript
+40 + 2;                 // 42
+44 - 2;                 // 42
+21 * 2;                 // 42
+84 / 2;                 // 42
+7 ** 2;                 // 49
+49 % 2;                 // 1
+```
+
+<Note>
+The `+` operator is overloaded: when one or both operands is a string, it performs string concatenation. Otherwise, it performs numeric addition.
+</Note>
+
+All mathematical operators coerce non-number operands to numbers:
+
+```javascript
+44 - "2";               // 42 ("2" coerced to 2)
+21 * "2";               // 42
+"7" ** "2";             // 49 (both coerced)
+```
+
+Unary `+` and `-` operators:
+
+```javascript
++42;                    // 42
+-42;                    // -42
++"42";                  // 42 (string coerced to number)
+-"42";                  // -42
+```
+
+#### Increment and Decrement
+
+The `++` and `--` operators perform their operation and reassign:
+
+```javascript
+myAge = 42;
+
+myAge++;                // postfix
+myAge;                  // 43
+
+++myAge;                // prefix
+myAge;                  // 44
+```
+
+### Bitwise Operators
+
+JS provides several bitwise operators that work on 32-bit signed integers:
+
+- `&` (AND), `|` (OR), `^` (XOR), `~` (NOT)
+- `<<` (left shift), `>>` (sign-propagating right shift)
+- `>>>` (zero-fill right shift)
+
+```javascript
+42 & 36;                // 32
+42 | 36;                // 46
+~42;                    // -43
+42 << 3;                // 336
+```
+
+A common idiom uses bitwise OR to truncate decimals:
+
+```javascript
+myGPA = 3.54;
+myGPA | 0;              // 3 (truncates decimal)
+```
+
+<Warning>
+`| 0` is truncation, NOT floor. The result agrees with `Math.floor()` on positive numbers, but differs on negative numbers, because floor rounds towards `-Infinity`.
+</Warning>
+
+### Number Value Methods
+
+Number values provide these methods:
+
+- `toExponential(fractionDigits)` - Scientific notation string
+- `toFixed(digits)` - Fixed decimal places
+- `toPrecision(precision)` - Significant digits
+- `toLocaleString(locales, options)` - Locale-aware string
+
+```javascript
+myAge = 42;
+myAge.toExponential(3);         // "4.200e+1"
+```
+
+<Note>
+The `.` can be ambiguous with number literals. Use whitespace or parentheses:
+
+```javascript
+42 .toExponential(3);           // "4.200e+1"
+(42).toExponential(3);          // "4.200e+1"
+42..toExponential(3);           // "4.200e+1" (double-dot idiom)
+```
+</Note>
+
+### Static Number Properties
+
+- `Number.EPSILON` - Smallest difference between 1 and next value
+- `Number.MIN_SAFE_INTEGER` / `Number.MAX_SAFE_INTEGER` - Safe integer range
+- `Number.MIN_VALUE` / `Number.MAX_VALUE` - Representable value range
+- `Number.NEGATIVE_INFINITY` / `Number.POSITIVE_INFINITY` - Infinite values
+- `Number.NaN` - The special invalid number value
+
+### Static Number Helpers
+
+- `Number.isFinite(value)` - Check if finite
+- `Number.isInteger(value)` - Check if integer
+- `Number.isSafeInteger(value)` - Check if safe integer
+- `Number.isNaN(value)` - Check if NaN (bug-fixed version)
+- `Number.parseFloat(string)` - Parse float
+- `Number.parseInt(string, radix)` - Parse integer
+
+### Static Math Namespace
+
+JS includes many mathematical constants and utilities on the `Math` namespace:
+
+```javascript
+Math.PI;                        // 3.141592653589793
+
+// Absolute value
+Math.abs(-32.6);                // 32.6
+
+// Rounding
+Math.round(-32.6);              // -33
+Math.floor(3.7);                // 3
+Math.ceil(3.1);                 // 4
+Math.trunc(3.7);                // 3
+
+// Min/max
+Math.min(100, Math.max(0, 42)); // 42
+
+// Power and roots
+Math.pow(2, 8);                 // 256
+Math.sqrt(16);                  // 4
+
+// Trigonometry
+Math.sin(Math.PI / 2);          // 1
+Math.cos(Math.PI);              // -1
+```
+
+<Warning>
+`Math.random()` is not cryptographically secure. For security-sensitive random number generation, use `crypto.getRandomValues()` instead.
+</Warning>
+
+### BigInts and Numbers Don't Mix
+
+Values of `number` type and `bigint` type cannot mix in operations:
+
+```javascript
+myAge = 42n;
+
+myAge + 1;                  // TypeError!
+myAge + 1n;                 // 43n (works)
+
+myAge++;                    // 44n (works with unary operators)
+```
+
+To convert between types:
+
+```javascript
+BigInt(42);                 // 42n
+Number(42n);                // 42
+
+// But watch out for precision loss:
+BigInt(4.2);                // RangeError!
+Number(2n ** 1024n);        // Infinity
+```
+
+## Primitives Are Foundational
+
+Over the last two chapters, we've dug deep into how primitive values behave in JS. The story doesn't end here — in the next chapter, we'll turn our attention to understanding JS's object types.
+
+<Card title="Continue to Chapter 3" icon="arrow-right" href="/types-grammar/ch3">
+  Learn about object values, arrays, functions, and how they differ from primitives
+</Card>

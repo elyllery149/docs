@@ -1,0 +1,412 @@
+---
+title: "Chapter 7: Using Closures"
+description: "Master closure in JavaScript - understand how functions remember their outer variables, manage memory with garbage collection, and use closure to improve code organization."
+---
+
+Up to this point, we've focused on the ins and outs of lexical scope, and how that affects the organization and usage of variables in our programs.
+
+Our attention again shifts broader in abstraction, to the historically somewhat daunting topic of closure. Don't worry! You don't need an advanced computer science degree to make sense of it.
+
+<Note>
+The *least exposure* principle (POLE) encourages us to use block (and function) scoping to limit the scope exposure of variables. Closure builds on this approach: for variables we need to use over time, instead of placing them in larger outer scopes, we can encapsulate them but still preserve access from inside functions, for broader use.
+</Note>
+
+Closure is one of the most important language characteristics ever invented in programming—it underlies major programming paradigms, including Functional Programming (FP), modules, and even a bit of class-oriented design.
+
+## See the Closure
+
+Closure is originally a mathematical concept, from lambda calculus. But I'm not going to list out math formulas or use a bunch of notation and jargon to define it.
+
+Instead, I'm going to focus on a practical perspective. We'll start by defining closure in terms of what we can observe in different behavior of our programs.
+
+<Note>
+Closure is a behavior of functions and only functions. If you aren't dealing with a function, closure does not apply. An object cannot have closure, nor does a class have closure (though its functions/methods might). Only functions have closure.
+</Note>
+
+For closure to be observed, a function must be invoked, and specifically it must be invoked in a different branch of the scope chain from where it was originally defined.
+
+Let's look at some code, annotated with its relevant scope bubble colors:
+
+```javascript
+// outer/global scope: RED(1)
+
+function lookupStudent(studentID) {
+    // function scope: BLUE(2)
+
+    var students = [
+        { id: 14, name: "Kyle" },
+        { id: 73, name: "Suzy" },
+        { id: 112, name: "Frank" },
+        { id: 6, name: "Sarah" }
+    ];
+
+    return function greetStudent(greeting){
+        // function scope: GREEN(3)
+
+        var student = students.find(
+            student => student.id == studentID
+        );
+
+        return `${ greeting }, ${ student.name }!`;
+    };
+}
+
+var chosenStudents = [
+    lookupStudent(6),
+    lookupStudent(112)
+];
+
+// accessing the function's name:
+chosenStudents[0].name;
+// greetStudent
+
+chosenStudents[0]("Hello");
+// Hello, Sarah!
+
+chosenStudents[1]("Howdy");
+// Howdy, Frank!
+```
+
+The first thing to notice about this code is that the `lookupStudent(..)` outer function creates and returns an inner function called `greetStudent(..)`. `lookupStudent(..)` is called twice, producing two separate instances of its inner `greetStudent(..)` function.
+
+While `greetStudent(..)` does receive a single argument as the parameter named `greeting`, it also makes reference to both `students` and `studentID`, identifiers which come from the enclosing scope of `lookupStudent(..)`. Each of those references from the inner function to the variable in an outer scope is called a *closure*. In academic terms, each instance of `greetStudent(..)` *closes over* the outer variables `students` and `studentID`.
+
+### What Closures Do
+
+Closure allows `greetStudent(..)` to continue to access those outer variables even after the outer scope is finished (when each call to `lookupStudent(..)` completes). Instead of the instances of `students` and `studentID` being garbage collected, they stay around in memory.
+
+<Tip>
+If JS functions did not have closure, the completion of each `lookupStudent(..)` call would immediately tear down its scope and GC the `students` and `studentID` variables. When we later called one of the `greetStudent(..)` functions, what would then happen? We should get a `ReferenceError`, right?
+
+But we don't get an error. This is a direct observation of closure!
+</Tip>
+
+### Adding Up Closures
+
+Let's examine one of the canonical examples often cited for closure:
+
+```javascript
+function adder(num1) {
+    return function addTo(num2){
+        return num1 + num2;
+    };
+}
+
+var add10To = adder(10);
+var add42To = adder(42);
+
+add10To(15);    // 25
+add42To(9);     // 51
+```
+
+Each instance of the inner `addTo(..)` function is closing over its own `num1` variable (with values `10` and `42`, respectively), so those `num1`'s don't go away just because `adder(..)` finishes.
+
+<Note>
+An important detail: closure is associated with an instance of a function, rather than its single lexical definition. Every time the outer `adder(..)` function runs, a *new* inner `addTo(..)` function instance is created, and for each new instance, a new closure.
+</Note>
+
+Even though closure is based on lexical scope, which is handled at compile time, closure is observed as a runtime characteristic of function instances.
+
+### Live Link, Not a Snapshot
+
+In both examples from the previous sections, we **read the value from a variable** that was held in a closure. That makes it feel like closure might be a snapshot of a value at some given moment. Indeed, that's a common misconception.
+
+<Warning>
+Closure is actually a live link, preserving access to the full variable itself. We're not limited to merely reading a value; the closed-over variable can be updated (re-assigned) as well!
+</Warning>
+
+Consider:
+
+```javascript
+function makeCounter() {
+    var count = 0;
+
+    return function getCurrent() {
+        count = count + 1;
+        return count;
+    };
+}
+
+var hits = makeCounter();
+
+hits();     // 1
+hits();     // 2
+hits();     // 3
+```
+
+The `count` variable is closed over by the inner `getCurrent()` function, which keeps it around instead of it being subjected to GC. The `hits()` function calls access *and* update this variable, returning an incrementing count each time.
+
+### Common Mistake: Loop Closures
+
+The classic illustration of closure mistakes is defining functions inside a loop:
+
+```javascript
+var keeps = [];
+
+for (var i = 0; i < 3; i++) {
+    keeps[i] = function keepI(){
+        // closure over `i`
+        return i;
+    };
+}
+
+keeps[0]();   // 3 -- WHY!?
+keeps[1]();   // 3
+keeps[2]();   // 3
+```
+
+You might have expected the `keeps[0]()` invocation to return `0`. But that assumption stems from thinking of closure as value-oriented rather than variable-oriented.
+
+Something about the structure of a `for`-loop can trick us into thinking that each iteration gets its own new `i` variable; in fact, this program only has one `i` since it was declared with `var`.
+
+Each saved function returns `3`, because by the end of the loop, the single `i` variable in the program has been assigned `3`.
+
+<Tip>
+How could we preserve multiple values? We need a different variable for each iteration. Let's create a new variable for each:
+</Tip>
+
+```javascript
+var keeps = [];
+
+for (var i = 0; i < 3; i++) {
+    // new `j` created each iteration
+    let j = i;
+
+    keeps[i] = function keepEachJ(){
+        // close over `j`, not `i`!
+        return j;
+    };
+}
+
+keeps[0]();   // 0
+keeps[1]();   // 1
+keeps[2]();   // 2
+```
+
+Each function is now closed over a separate (new) variable from each iteration. Even better, recall that a `let` declaration in a `for` loop actually creates a new variable for *each iteration* of the loop:
+
+```javascript
+var keeps = [];
+
+for (let i = 0; i < 3; i++) {
+    // the `let i` gives us a new `i` for each iteration!
+    keeps[i] = function keepEachI(){
+        return i;
+    };
+}
+
+keeps[0]();   // 0
+keeps[1]();   // 1
+keeps[2]();   // 2
+```
+
+### Common Closures: Ajax and Events
+
+Closure is most commonly encountered with callbacks:
+
+```javascript
+function lookupStudentRecord(studentID) {
+    ajax(
+        `https://some.api/student/${ studentID }`,
+        function onRecord(record) {
+            console.log(
+                `${ record.name } (${ studentID })`
+            );
+        }
+    );
+}
+
+lookupStudentRecord(114);
+// Frank (114)
+```
+
+The `onRecord(..)` callback is going to be invoked at some point in the future, after the response from the Ajax call comes back. Why then is `studentID` still around and accessible to the callback? Closure.
+
+Event handlers are another common usage of closure:
+
+```javascript
+function listenForClicks(btn,label) {
+    btn.addEventListener("click",function onClick(){
+        console.log(
+            `The ${ label } button was clicked!`
+        );
+    });
+}
+
+var submitBtn = document.getElementById("submit-btn");
+
+listenForClicks(submitBtn,"Checkout");
+```
+
+The `label` parameter is closed over by the `onClick(..)` event handler callback. When the button is clicked, `label` still exists to be used.
+
+### Observable Definition
+
+We're now ready to define closure:
+
+<Note>
+**Closure** is observed when a function uses variable(s) from outer scope(s) even while running in a scope where those variable(s) wouldn't be accessible.
+</Note>
+
+The key parts of this definition are:
+
+- Must be a function involved
+- Must reference at least one variable from an outer scope  
+- Must be invoked in a different branch of the scope chain from the variable(s)
+
+## The Closure Lifecycle and Garbage Collection (GC)
+
+Since closure is inherently tied to a function instance, its closure over a variable lasts as long as there is still a reference to that function.
+
+<Warning>
+Closure can unexpectedly prevent the GC of a variable that you're otherwise done with, which leads to run-away memory usage over time. That's why it's important to discard function references (and thus their closures) when they're not needed anymore.
+</Warning>
+
+Consider:
+
+```javascript
+function manageBtnClickEvents(btn) {
+    var clickHandlers = [];
+
+    return function listener(cb){
+        if (cb) {
+            let clickHandler =
+                function onClick(evt){
+                    console.log("clicked!");
+                    cb(evt);
+                };
+            clickHandlers.push(clickHandler);
+            btn.addEventListener("click", clickHandler);
+        }
+        else {
+            // passing no callback unsubscribes all click handlers
+            for (let handler of clickHandlers) {
+                btn.removeEventListener("click", handler);
+            }
+            clickHandlers = [];
+        }
+    };
+}
+
+var onSubmit = manageBtnClickEvents(mySubmitBtn);
+
+onSubmit(function checkout(evt){
+    // handle checkout
+});
+
+// later, unsubscribe all handlers:
+onSubmit();
+```
+
+When we call `onSubmit()` with no input on the last line, all event handlers are unsubscribed, and the `clickHandlers` array is emptied. Once all click handler function references are discarded, the closures are discarded.
+
+### Per Variable or Per Scope?
+
+Should we think of closure as applied only to the referenced outer variable(s), or does closure preserve the entire scope chain with all its variables?
+
+Conceptually, closure is **per variable** rather than *per scope*. Ajax callbacks, event handlers, and all other forms of function closures are typically assumed to close over only what they explicitly reference.
+
+But the reality is more complicated than that. Many modern JS engines do apply an *optimization* that removes any variables from a closure scope that aren't explicitly referenced. However, there are situations where such an optimization cannot be applied.
+
+<Tip>
+In cases where a variable holds a large value (like an object or array) and that variable is present in a closure scope, if you don't need that value anymore, it's safer to manually discard the value:
+
+```javascript
+function manageStudentGrades(studentRecords) {
+    var grades = studentRecords.map(getGrade);
+    
+    // unset to prevent unwanted memory retention
+    studentRecords = null;
+    
+    return addGrade;
+    // ..
+}
+```
+</Tip>
+
+## An Alternative Perspective
+
+There's another way of thinking about closure that may help deepen the mental models.
+
+Instead of thinking about the inner function instance moving to the outer scope via the `return` and assignment, we can envision that function instances actually just stay in place in their own scope environment.
+
+What gets *sent* to the outer scope is **just a reference** to the in-place function instance, rather than the function instance itself.
+
+In this alternative model, functions stay in place and keep accessing their original scope chain just like they always could. Closure instead describes the *magic* of **keeping alive a function instance**, along with its whole scope environment and chain, for as long as there's at least one reference to that function instance floating around.
+
+## Why Closure?
+
+Now that we have a well-rounded sense of what closure is and how it works, let's explore some ways it can improve the code structure and organization of an example program.
+
+Consider this event handler without closure:
+
+```javascript
+var APIendpoints = {
+    studentIDs: "https://some.api/register-students",
+};
+
+var data = {
+    studentIDs: [ 14, 73, 112, 6 ],
+};
+
+function makeRequest(evt) {
+    var btn = evt.target;
+    var recordKind = btn.dataset.kind;
+    ajax(
+        APIendpoints[recordKind],
+        data[recordKind]
+    );
+}
+
+btn.addEventListener("click",makeRequest);
+```
+
+The `makeRequest(..)` utility has to retrieve the `data-kind` attribute from the target button element each time it's fired. Why couldn't an event handler *remember* this value? Let's use closure:
+
+```javascript
+function setupButtonHandler(btn) {
+    var recordKind = btn.dataset.kind;
+
+    btn.addEventListener(
+        "click",
+        function makeRequest(evt){
+            ajax(
+                APIendpoints[recordKind],
+                data[recordKind]
+            );
+        }
+    );
+}
+
+setupButtonHandler(btn);
+```
+
+With the `setupButtonHandler(..)` approach, the `data-kind` attribute is retrieved once at initial setup. `recordKind` is then closed over by the inner `makeRequest(..)` click handler.
+
+By placing `recordKind` inside `setupButtonHandler(..)`, we limit the scope exposure of that variable to a more appropriate subset of the program. Closure lets the inner `makeRequest()` function instance *remember* this variable and access it whenever needed.
+
+## Closer to Closure
+
+We explored two models for mentally tackling closure:
+
+<CardGroup cols={2}>
+<Card title="Observational Model" icon="eye">
+Closure is a function instance remembering its outer variables even as that function is passed to and **invoked in** other scopes.
+</Card>
+
+<Card title="Implementational Model" icon="gear">
+Closure is a function instance and its scope environment preserved in-place while any references to it are passed around and **invoked from** other scopes.
+</Card>
+</CardGroup>
+
+### Benefits to Our Programs
+
+<Steps>
+1. **Improved Efficiency**: Closure allows a function instance to remember previously determined information instead of having to compute it each time.
+
+2. **Better Readability**: Closure bounds scope-exposure by encapsulating variable(s) inside function instances, while still making sure the information is accessible for future use.
+
+3. **Cleaner Code**: The resultant narrower, more specialized function instances are cleaner to interact with, since the preserved information doesn't need to be passed in every invocation.
+</Steps>
+
+Before you move on, take some time to restate this summary *in your own words*, explaining what closure is and why it's helpful in your programs.

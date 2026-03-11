@@ -1,0 +1,413 @@
+---
+title: 'Chapter 3: Object Values'
+description: Understanding object types in JavaScript including plain objects, arrays, functions, and fundamental objects
+---
+
+<Note>
+This book is currently a **work in progress**. Content is being actively developed.
+</Note>
+
+# Chapter 3: Object Values
+
+Now that we're comfortable with the built-in primitive types, we turn our attention to the `object` types in JS.
+
+<Tip>
+I could write a whole book talking about objects in-depth; in fact, I already did! The **"Objects & Classes"** title of this series covers objects in-depth already, so make sure you've read that before continuing with this chapter.
+</Tip>
+
+Rather than repeat that book's content, here we'll focus our attention on how the `object` value-type behaves and interacts with other values in JS.
+
+## Types of Objects
+
+The `object` value-type comprises several sub-types, each with specialized behaviors:
+
+<CardGroup cols={2}>
+  <Card title="Plain Objects" icon="cubes">
+    General-purpose key-value collections
+  </Card>
+  <Card title="Fundamental Objects" icon="box-archive">
+    Boxed primitives (String, Number, Boolean)
+  </Card>
+  <Card title="Built-in Objects" icon="toolbox">
+    Date, Error, Map, Set, etc.
+  </Card>
+  <Card title="Arrays" icon="list">
+    Numerically indexed collections
+  </Card>
+  <Card title="Regular Expressions" icon="magnifying-glass">
+    Pattern matching objects
+  </Card>
+  <Card title="Functions" icon="function">
+    Callable objects
+  </Card>
+</CardGroup>
+
+Beyond the specialized behaviors, one shared characteristic is that **all objects can act as collections of properties** holding values (including functions/methods).
+
+## Plain Objects
+
+The general object value-type is sometimes referred to as *plain ol' javascript objects* (POJOs).
+
+Plain objects have a literal form:
+
+```javascript
+address = {
+    street: "12345 Market St",
+    city: "San Francisco",
+    state: "CA",
+    zip: "94114"
+};
+```
+
+This plain object (POJO), as defined with the `{ .. }` curly braces, is a collection of named properties. Properties can hold any values, primitives or other objects.
+
+The same object could also be defined imperatively using the `new Object()` constructor:
+
+```javascript
+address = new Object();
+address.street = "12345 Market St";
+address.city = "San Francisco";
+address.state = "CA";
+address.zip = "94114";
+```
+
+<Tip>
+Plain objects are by default `[[Prototype]]` linked to `Object.prototype`, giving them delegated access to several general object methods.
+</Tip>
+
+### Methods Available on Plain Objects
+
+Plain objects have access to these methods via `Object.prototype`:
+
+<AccordionGroup>
+  <Accordion title="toString() / toLocaleString()">
+    Convert object to string representation
+  </Accordion>
+  <Accordion title="valueOf()">
+    Returns the primitive value of the object
+  </Accordion>
+  <Accordion title="isPrototypeOf(object)">
+    Check if this object is in another object's prototype chain
+  </Accordion>
+  <Accordion title="hasOwnProperty(prop)">
+    Check if object has a property (deprecated - use `Object.hasOwn()` instead)
+  </Accordion>
+  <Accordion title="propertyIsEnumerable(prop)">
+    Check if a property will show up in `for...in` loops
+  </Accordion>
+</AccordionGroup>
+
+```javascript
+address.toString();                     // "[object Object]"
+Object.prototype.isPrototypeOf(address); // true
+```
+
+## Fundamental Objects
+
+JS defines several *fundamental* object types, which are instances of various built-in constructors:
+
+- `new String()`
+- `new Number()`
+- `new Boolean()`
+
+<Warning>
+**These constructors must be used with the `new` keyword** to construct instances of the fundamental objects. Otherwise, these functions actually perform type coercion (see Chapter 4).
+</Warning>
+
+These fundamental object constructors create object value-types instead of primitives:
+
+```javascript
+myName = "Kyle";
+typeof myName;                      // "string"
+
+myNickname = new String("getify");
+typeof myNickname;                  // "object"
+```
+
+An instance of a fundamental object constructor can be seen as a wrapper around the corresponding underlying primitive value.
+
+<Warning>
+**It's nearly universally regarded as bad practice** to ever directly instantiate these fundamental objects. The primitive counterparts are:
+- More predictable
+- More performant
+- Offer *auto-boxing* whenever the underlying object-wrapper form is needed
+</Warning>
+
+### Prototypes
+
+Instances of the fundamental object constructors are `[[Prototype]]` linked to their constructors' `prototype` objects:
+
+<Steps>
+  <Step title="String.prototype">
+    Defines `length` property and string-specific methods like `toUpperCase()`, `slice()`, etc.
+  </Step>
+  
+  <Step title="Number.prototype">
+    Defines number-specific methods like `toPrecision()`, `toFixed()`, etc.
+  </Step>
+  
+  <Step title="Boolean.prototype">
+    Defines default `toString()` and `valueOf()` methods
+  </Step>
+  
+  <Step title="Symbol.prototype">
+    Defines `description` getter, plus default `toString()` and `valueOf()` methods
+  </Step>
+  
+  <Step title="BigInt.prototype">
+    Defines default `toString()`, `toLocaleString()`, and `valueOf()` methods
+  </Step>
+</Steps>
+
+Any direct instance of the built-in constructors has `[[Prototype]]` delegated access to its respective `prototype` properties/methods. Moreover, **corresponding primitive values also have such delegated access, by way of *auto-boxing*.**
+
+### Automatic Objects
+
+I've mentioned *auto-boxing* several times (in Chapters 1 and 2, and a few times so far in this chapter). It's finally time for us to explain that concept.
+
+<Note>
+**Auto-boxing is the temporary conversion of a primitive to its object wrapper to enable property/method access.**
+</Note>
+
+Accessing a property or method on a value requires that the value be an object. As we've seen in Chapter 1, primitives are NOT objects, so JS needs to temporarily convert/wrap such a primitive to its fundamental object counterpart to perform that access.
+
+For example:
+
+```javascript
+myName = "Kyle";
+
+myName.length;              // 4
+myName.toUpperCase();       // "KYLE"
+```
+
+<AccordionGroup>
+  <Accordion title="How Auto-Boxing Works">
+    1. You access a property/method on a primitive value
+    2. JS temporarily wraps the primitive in its corresponding fundamental object
+    3. The property/method is accessed on that object
+    4. The result is returned
+    5. The temporary object is discarded
+    
+    ```javascript
+    // What you write:
+    "hello".length
+    
+    // What JS effectively does:
+    (new String("hello")).length
+    ```
+  </Accordion>
+  
+  <Accordion title="Which Primitives Auto-Box?">
+    - `string` → `new String()`
+    - `number` → `new Number()`
+    - `boolean` → `new Boolean()`
+    - `symbol` → internal Symbol wrapper
+    - `bigint` → internal BigInt wrapper
+    
+    **`null` and `undefined` do NOT auto-box** — they have no corresponding fundamental objects.
+  </Accordion>
+</AccordionGroup>
+
+When the primitive value is *auto-boxed* to its fundamental object counterpart, those internally created objects have access to predefined properties/methods via a `[[Prototype]]` link to their respective fundamental object's prototype.
+
+<Tip>
+**Is auto-boxing a form of coercion?**
+
+I say it is, though some disagree. Internally, a primitive is converted to an object, meaning a change in value-type has occurred. Yes, it's temporary, but plenty of coercions are temporary. Moreover, the conversion is rather *implicit* (implied by the property/method access, but only happens internally).
+</Tip>
+
+## Other Built-in Objects
+
+In addition to fundamental object constructors, JS defines a number of other built-in constructors that create further specialized object sub-types:
+
+<CardGroup cols={2}>
+  <Card title="Date" icon="calendar">
+    `new Date()` - Date and time objects
+  </Card>
+  <Card title="Error" icon="circle-exclamation">
+    `new Error()` - Error objects
+  </Card>
+  <Card title="Collections" icon="database">
+    Map, Set, WeakMap, WeakSet - Keyed collections
+  </Card>
+  <Card title="Typed Arrays" icon="table">
+    Int8Array, Uint32Array, etc. - Indexed collections
+  </Card>
+  <Card title="Buffers" icon="memory">
+    ArrayBuffer, SharedArrayBuffer - Structured data
+  </Card>
+</CardGroup>
+
+```javascript
+now = new Date();
+err = new Error("Something went wrong");
+users = new Map();
+uniqueIds = new Set();
+```
+
+## Arrays
+
+Arrays are objects that are specialized to behave as numerically indexed collections of values, as opposed to holding values at named properties like plain objects do.
+
+Arrays have a literal form:
+
+```javascript
+favoriteNumbers = [3, 12, 42];
+favoriteNumbers[2];                 // 42
+```
+
+The same array could also be defined imperatively using the `new Array()` constructor:
+
+```javascript
+favoriteNumbers = new Array();
+favoriteNumbers[0] = 3;
+favoriteNumbers[1] = 12;
+favoriteNumbers[2] = 42;
+```
+
+<Tip>
+Arrays are `[[Prototype]]` linked to `Array.prototype`, giving them delegated access to a variety of array-oriented methods.
+</Tip>
+
+### Array Methods
+
+<AccordionGroup>
+  <Accordion title="Mutating Methods">
+    These methods modify the array in place:
+    
+    - `push()` / `pop()` - Add/remove from end
+    - `unshift()` / `shift()` - Add/remove from beginning
+    - `splice()` - Add/remove at any position
+    - `sort()` - Sort elements
+    - `reverse()` - Reverse order
+    - `fill()` - Fill with value
+    
+    ```javascript
+    nums = [1, 2, 3];
+    nums.push(4);        // nums is now [1, 2, 3, 4]
+    nums.pop();          // nums is now [1, 2, 3]
+    ```
+  </Accordion>
+  
+  <Accordion title="Non-Mutating Methods">
+    These methods create and return a new array:
+    
+    - `concat()` - Merge arrays
+    - `slice()` - Extract portion
+    - `map()` - Transform elements
+    - `filter()` - Select elements
+    - `flat()` - Flatten nested arrays
+    
+    ```javascript
+    nums = [1, 2, 3];
+    doubled = nums.map(v => v * 2);   // [2, 4, 6]
+    // nums is still [1, 2, 3]
+    ```
+  </Accordion>
+  
+  <Accordion title="Query Methods">
+    These methods compute and return a result:
+    
+    - `indexOf()` / `lastIndexOf()` - Find index
+    - `includes()` - Check if value exists
+    - `find()` / `findIndex()` - Find element
+    - `some()` / `every()` - Test elements
+    - `reduce()` - Reduce to single value
+    
+    ```javascript
+    nums = [1, 2, 3];
+    nums.includes(2);         // true
+    nums.find(v => v > 1);    // 2
+    ```
+  </Accordion>
+</AccordionGroup>
+
+```javascript
+favoriteNumbers = [3, 12, 42];
+
+favoriteNumbers.map(v => v * 2);
+// [6, 24, 84]
+
+favoriteNumbers.includes(42);       // true
+```
+
+## Regular Expressions
+
+<Note>
+Regular expressions are covered in detail in other resources. This section is TODO for the book.
+</Note>
+
+Regular expressions are objects used for pattern matching:
+
+```javascript
+pattern = /hello/i;
+text = "Hello, world!";
+
+pattern.test(text);          // true
+text.match(pattern);         // ["Hello"]
+```
+
+## Functions
+
+<Note>
+Functions are covered extensively in the "Scope & Closures" book of this series. This section is TODO.
+</Note>
+
+Functions are callable objects:
+
+```javascript
+function greet(name) {
+    return `Hello, ${name}!`;
+}
+
+typeof greet;               // "function"
+greet("Kyle");              // "Hello, Kyle!"
+```
+
+## Proposed: Records/Tuples
+
+<Note>
+At the time of this writing, a (stage-2) proposal exists to add Records and Tuples to JS.
+</Note>
+
+Records and Tuples are similar to objects and arrays, but with some notable differences:
+
+- **Immutable** - Cannot be modified after creation
+- **Treated as primitive values** - For assignment and equality comparison
+- **Syntax** - Use `#` prefix before `{ }` or `[ ]` delimiters
+- **Contents** - Can only contain primitive values (including other records/tuples)
+
+```javascript
+// Records (like immutable objects)
+person = #{
+    name: "Kyle",
+    age: 42
+};
+
+// Tuples (like immutable arrays)
+coordinates = #[10, 20, 30];
+
+// Value equality
+person === #{ name: "Kyle", age: 42 };      // true
+coordinates === #[10, 20, 30];              // true
+```
+
+<Warning>
+While these look and seem like objects/arrays, they are indeed **primitive (non-object) values**.
+</Warning>
+
+## Summary
+
+Objects in JavaScript come in many forms:
+
+1. **Plain Objects** - General-purpose key-value collections
+2. **Fundamental Objects** - Wrappers for primitives (rarely used directly)
+3. **Arrays** - Numerically indexed collections
+4. **Functions** - Callable objects
+5. **Built-in Objects** - Date, Error, Map, Set, and more
+
+The key distinction between primitives and objects is that **objects can have properties**, while primitives cannot (though they can access properties through auto-boxing).
+
+<Card title="Continue to Chapter 4" icon="arrow-right" href="/types-grammar/ch4">
+  Learn about coercion - how JavaScript converts between value types
+</Card>

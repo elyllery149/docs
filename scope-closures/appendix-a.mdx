@@ -1,0 +1,465 @@
+---
+title: "Appendix A: Exploring Further"
+description: "Dive deeper into JavaScript scope nuances - implied scopes, anonymous vs named functions, hoisting, var vs let debate, TDZ origins, and more advanced topics."
+---
+
+We will now explore a number of nuances and edges around many of the topics covered in the main text of this book. This appendix is optional, supporting material.
+
+<Note>
+I believe it's better to be empowered by knowledge of how things work than to just gloss over details with assumptions and lack of curiosity. You won't get to spend all your time riding on the smooth *happy path*. Wouldn't you rather be prepared for the inevitable bumps?
+</Note>
+
+## Implied Scopes
+
+Scopes are sometimes created in non-obvious places. In practice, these implied scopes don't often impact your program behavior, but it's still useful to know they're happening.
+
+### Parameter Scope
+
+The conversation metaphor in Chapter 2 implies that function parameters are basically the same as locally declared variables in the function scope. But that's not always true.
+
+Consider:
+
+```javascript
+// outer/global scope: RED(1)
+
+function getStudentName(studentID) {
+    // function scope: BLUE(2)
+    // ..
+}
+```
+
+Here, `studentID` is a "simple" parameter, so it does behave as a member of the BLUE(2) function scope. But if we change it to be a non-simple parameter, that's no longer technically the case.
+
+Parameter forms considered non-simple include parameters with default values, rest parameters (using `...`), and destructured parameters.
+
+```javascript
+// outer/global scope: RED(1)
+
+function getStudentName(/*BLUE(2)*/ studentID = 0) {
+    // function scope: GREEN(3)
+    // ..
+}
+```
+
+<Warning>
+Here, the parameter list essentially becomes its own scope, and the function's scope is then nested inside *that* scope.
+</Warning>
+
+Consider this example with a default parameter:
+
+```javascript
+function whatsTheDealHere(id,defaultID = () => id) {
+    var id = 5;
+    console.log( defaultID() );
+}
+
+whatsTheDealHere(3);
+// 3
+```
+
+The `var id = 5` is shadowing the `id` parameter, but the closure of the `defaultID()` function is over the parameter, not the shadowing variable in the function body. This proves there's a scope bubble around the parameter list.
+
+<Tip>
+**My advice to avoid getting bitten:**
+- Never shadow parameters with local variables
+- Avoid using a default parameter function that closes over any of the parameters
+</Tip>
+
+### Function Name Scope
+
+The name identifier of a function expression is in its own implied scope, nested between the outer enclosing scope and the main inner function scope.
+
+```javascript
+var askQuestion = function ofTheTeacher(){
+    // why is this not a duplicate declaration error?
+    let ofTheTeacher = "Confused, yet?";
+};
+```
+
+The `let` declaration form does not allow re-declaration. But this is perfectly legal shadowing, not re-declaration, because the two `ofTheTeacher` identifiers are in separate scopes.
+
+## Anonymous vs. Named Functions
+
+As discussed in Chapter 3, functions can be expressed in named or anonymous form. It's vastly more common to use the anonymous form, but is that a good idea?
+
+<Note>
+As you contemplate naming your functions, consider:
+- Name inference is incomplete
+- Lexical names allow self-reference
+- Names are useful descriptions
+- Arrow functions have no lexical names
+- IIFEs also need names
+</Note>
+
+### Why Names Matter
+
+First of all, "anonymous" showing up in stack traces is not helpful to debugging:
+
+```javascript
+btn.addEventListener("click",function(){
+    setTimeout(function(){
+        ["a",42].map(function(v){
+            console.log(v.toUpperCase());
+        });
+    },100);
+});
+// Uncaught TypeError: v.toUpperCase is not a function
+//     at myProgram.js:4
+//     at Array.map (<anonymous>)
+//     at myProgram.js:3
+```
+
+Compare to what is reported if we give the functions names:
+
+```javascript
+btn.addEventListener("click",function onClick(){
+    setTimeout(function waitAMoment(){
+        ["a",42].map(function allUpper(v){
+            console.log(v.toUpperCase());
+        });
+    },100);
+});
+// Uncaught TypeError: v.toUpperCase is not a function
+//     at allUpper (myProgram.js:4)
+//     at Array.map (<anonymous>)
+//     at waitAMoment (myProgram.js:3)
+```
+
+The program is more debuggable if we use reasonable names for all our functions.
+
+### Missing Names?
+
+Name inference is incomplete. Anonymous `function` expressions passed as callbacks are incapable of receiving an inferred name:
+
+```javascript
+function ajax(url,cb) {
+    console.log(cb.name);
+}
+
+ajax("some.url",function(){
+    // ..
+});
+// ""
+```
+
+The vast majority of all `function` expressions, especially anonymous ones, are used as callback arguments; none of these get a name.
+
+### Names are Descriptors
+
+Leaving off a name from a function makes it harder for the reader to tell what the function's purpose is. Consider:
+
+```javascript
+[ 1, 2, 3, 4, 5 ].filter(function(v){
+    return v % 2 == 1;
+});
+// [ 1, 3, 5 ]
+
+[ 1, 2, 3, 4, 5 ].filter(function keepOnlyOdds(v){
+    return v % 2 == 1;
+});
+// [ 1, 3, 5 ]
+```
+
+<Tip>
+There's no reasonable argument that **omitting** the name `keepOnlyOdds` from the first callback more effectively communicates to the reader the purpose of this callback. The name very clearly tells the reader what's happening.
+</Tip>
+
+Think of it this way: how many times does the author need to figure out the purpose before adding the name? About once. But how many times will readers have to figure out the name/purpose? Every single time this line is ever read.
+
+<Warning>
+**All functions need names. Every single one. No exceptions.** Any name you omit is making the program harder to read, harder to debug, harder to extend and maintain later.
+</Warning>
+
+### Arrow Functions
+
+Arrow functions are **always** anonymous, even if they're used in a way that gives them an inferred name.
+
+Don't use them as a general replacement for regular functions. They're more concise, yes, but that brevity comes at the cost of omitting key visual delimiters that help our brains quickly parse out what we're reading.
+
+Arrow functions have a purpose: *lexical this* behavior. Arrow functions don't define a `this` identifier keyword at all. If you use a `this` inside an arrow function, it behaves exactly as any other variable reference.
+
+<Tip>
+In the rare cases you need *lexical this*, use an arrow function. But be aware that you're accepting the downsides of an anonymous function. Expend additional effort to mitigate the readability cost, such as more descriptive variable names and code comments.
+</Tip>
+
+### IIFE Variations
+
+All functions should have names, including IIFEs:
+
+```javascript
+(function doThisInstead(){
+    // ..
+})();
+```
+
+How do we come up with a name for an IIFE? Identify what the IIFE is there for. Why do you need a scope in that spot?
+
+```javascript
+var getStudents = (function StoreStudentRecords(){
+    var studentRecords = [];
+
+    return function getStudents() {
+        // ..
+    }
+})();
+```
+
+I named the IIFE `StoreStudentRecords` because that's what it's doing.
+
+## Hoisting: Functions and Variables
+
+Chapter 5 articulated both *function hoisting* and *variable hoisting*. Let's explore the merits of each.
+
+### Function Hoisting
+
+This program works because of *function hoisting*:
+
+```javascript
+getStudents();
+
+// ..
+
+function getStudents() {
+    // ..
+}
+```
+
+<Tip>
+I prefer to take advantage of *function hoisting* because it puts the *executable* code in any scope at the top, and any further declarations (functions) below. This means it's easier to find the code that will run in any given area.
+</Tip>
+
+I take advantage of this inverse positioning in all levels of scope:
+
+```javascript
+getStudents();
+
+// *************
+
+function getStudents() {
+    var whatever = doSomething();
+
+    // other stuff
+
+    return whatever;
+
+    // *************
+
+    function doSomething() {
+        // ..
+    }
+}
+```
+
+When I first open a file, the very first line is executable code that kicks off its behavior. Then, if I need to inspect `getStudents()`, I like that its first line is also executable code.
+
+### Variable Hoisting
+
+In almost all cases, I agree that *variable hoisting* is a bad idea. But there's one exception: placing `var` declarations in CommonJS modules.
+
+Here's how I typically structure my module definitions in Node:
+
+```javascript
+// dependencies
+var aModuleINeed = require("very-helpful");
+var anotherModule = require("kinda-helpful");
+
+// public API
+var publicAPI = Object.assign(module.exports,{
+    getStudents,
+    addStudents,
+});
+
+// ********************************
+// private implementation
+
+var cache = { };
+var otherData = [ ];
+
+function getStudents() {
+    // ..
+}
+
+function addStudents() {
+    // ..
+}
+```
+
+The `cache` and `otherData` variables are in the "private" section because I don't plan to expose them publicly. But I've had rare cases where I needed the assignments to happen *above*, before I declare the exported public API.
+
+That's literally the only case I've ever found for leveraging *variable hoisting*.
+
+## The Case for `var`
+
+Let's have some real talk about `var`:
+
+<Note>
+**Key points:**
+- `var` was never broken
+- `let` is your friend
+- `const` has limited utility
+- The best of both worlds: `var` *and* `let`
+</Note>
+
+### Don't Throw Out `var`
+
+`var` is fine, and works just fine. It's been around for 25 years, and it'll be around for another 25 years or more. Claims that `var` is broken, deprecated, or dangerous are bogus bandwagoning.
+
+Does that mean `var` is the right declarator for every declaration? Certainly not. But it still has its place.
+
+For the record, I'm a fan of `let`, for block-scoped declarations. I use it often. In fact, I probably use it as much or more than I use `var`.
+
+### `const`-antly Confused
+
+`const` pretends to create values that can't be mutated—a misconception that's extremely common—whereas what it really does is prevent re-assignment.
+
+```javascript
+const studentIDs = [ 14, 73, 112 ];
+
+// later
+
+studentIDs.push(6);   // whoa, wait... what!?
+```
+
+<Warning>
+Using a `const` with a mutable value (like an array or object) is asking for a future developer to fall into the trap that *value immutability* isn't the same thing as *assignment immutability*.
+</Warning>
+
+The only time I ever use `const` is when I'm assigning an already-immutable value (like `42` or `"Hello, friends!"`), and when it's clearly a "constant" in the sense of being a named placeholder for a literal value.
+
+### `var` *and* `let`
+
+The fact is, you should be using both `var` and `let` in your programs. They are not interchangeable.
+
+So where should we still use `var`? I always use `var` in the top-level scope of any function, regardless of whether that's at the beginning, middle, or end of the function. I also use `var` in the global scope.
+
+<Tip>
+Why use `var` for function scoping? Because that's exactly what `var` does. There literally is no better tool for the job of function scoping a declaration than a declarator that has, for 25 years, done exactly that.
+</Tip>
+
+By contrast, I rarely use a `var` inside a block. That's what `let` is for.
+
+```javascript
+function getStudents(data) {
+    var studentRecords = [];
+
+    for (let record of data.records) {
+        let id = `student-${ record.id }`;
+        studentRecords.push({
+            id,
+            record.name
+        });
+    }
+
+    return studentRecords;
+}
+```
+
+The `studentRecords` variable is intended for use across the whole function. `var` is the best declarator to tell the reader that. By contrast, `record` and `id` are intended for use only in the loop iteration, so `let` is the best tool.
+
+## What's the Deal with TDZ?
+
+The TDZ (temporal dead zone) was explained in Chapter 5. Let's look briefly at the motivations.
+
+### Where It All Started
+
+TDZ comes from `const`, actually. During early ES6 development work, TC39 had to decide whether `const` (and `let`) were going to hoist to the top of their blocks. They decided these declarations would hoist.
+
+But if `let` and `const` hoist to the top of the block, why don't they auto-initialize (to `undefined`) the way `var` does? Here was the main concern:
+
+```javascript
+{
+    // what should print here?
+    console.log(studentName);
+
+    // later
+
+    const studentName = "Frank";
+}
+```
+
+Let's imagine that `studentName` not only hoisted to the top of this block, but was also auto-initialized to `undefined`. For the first half of the block, `studentName` could be observed to have the `undefined` value. Once the `const studentName = ..` statement is reached, now `studentName` is assigned `"Frank"`.
+
+<Warning>
+But, is it strange that a constant observably has two different values, first `undefined`, then `"Frank"`? That does seem to go against what we think a `const`ant means; it should only ever be observable with one value.
+</Warning>
+
+We can't auto-initialize `studentName` to `undefined`. But the variable has to exist throughout the whole scope. What do we do with the period of time from when it first exists (beginning of scope) and when it's assigned its value?
+
+We call this period of time the "dead zone," as in the "temporal dead zone" (TDZ). To prevent confusion, it was determined that any sort of access of a variable while in its TDZ is illegal and must result in an error.
+
+### Who `let` the TDZ Out?
+
+TC39 made the decision: since we need a TDZ for `const`, we might as well have a TDZ for `let` as well. In fact, if we make `let` have a TDZ, then we discourage all that ugly variable hoisting people do.
+
+My counter-argument: if you're favoring consistency, be consistent with `var` instead of `const`; `let` is definitely more like `var` than `const`.
+
+But alas, that's not how it landed. `let` has a TDZ because `const` needs a TDZ, because `let` and `const` mimic `var` in their hoisting to the top of the (block) scope.
+
+## Are Synchronous Callbacks Still Closures?
+
+Chapter 7 presented two different models for tackling closure. These models are not wildly divergent, but they do approach from a different perspective, and that changes what we identify as a closure.
+
+### What is a Callback?
+
+Let's first consider an *asynchronous callback*:
+
+```javascript
+setTimeout(function waitForASecond(){
+    // this is where JS should call back into
+    // the program when the timer has elapsed
+},1000);
+```
+
+In this context, "calling back" makes a lot of sense. The JS engine is resuming our suspended program by *calling back in* at a specific location.
+
+### Synchronous Callback?
+
+But what about *synchronous callbacks*?
+
+```javascript
+function getLabels(studentIDs) {
+    return studentIDs.map(
+        function formatIDLabel(id){
+            return `Student ID: ${
+               String(id).padStart(6)
+            }`;
+        }
+    );
+}
+```
+
+Should we refer to `formatIDLabel(..)` as a callback? There's nothing to *call back into* per se, because the program hasn't paused or exited.
+
+<Tip>
+Let's refer to (the functions formerly known as) *synchronous callbacks*, as **inter-invoked functions (IIFs)**. These kinds of functions are *inter-invoked*, meaning: another entity invokes them, as opposed to IIFEs, which invoke themselves immediately.
+</Tip>
+
+What's the relationship between an *asynchronous callback* and an IIF? An *asynchronous callback* is an IIF that's invoked asynchronously instead of synchronously.
+
+### Synchronous Closure?
+
+Now that we've re-labeled *synchronous callbacks* as IIFs, are IIFs an example of closure?
+
+```javascript
+function printLabels(labels) {
+    var list = document.getElementById("labelsList");
+
+    labels.forEach(
+        function renderLabel(label){
+            var li = document.createElement("li");
+            li.innerText = label;
+            list.appendChild(li);
+        }
+    );
+}
+```
+
+The inner `renderLabel(..)` IIF references `list` from the enclosing scope. But here's where the definition/model we choose for closure matters:
+
+- If `renderLabel(..)` is a function that gets passed somewhere else and invoked, then yes, it's exercising closure.
+
+- But if `renderLabel(..)` stays in place, and only a reference to it is passed to `forEach(..)`, is there any need for closure to preserve the scope chain while it executes synchronously right inside its own scope?
+
+No. That's just normal lexical scope.
+
+That's it for Appendix A! These explorations should help deepen your understanding of JavaScript's scope and closure mechanisms.

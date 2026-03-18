@@ -95,6 +95,12 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "repasos gramaticales",
+        "pages": [
+          "repaso-gramatical-de-a1-y-a2"
+        ]
       }
     ]
   }

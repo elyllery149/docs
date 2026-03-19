@@ -20,96 +20,86 @@
   "navigation": {
     "dropdowns": [
       {
-        "dropdown": "ppp",
-        "anchors": [
+        "dropdown": "Books",
+        "groups": [
           {
-            "anchor": "grammar",
-            "tabs": [
-              {
-                "tab": "Books",
-                "groups": [
-                  {
-                    "group": "Introduction",
-                    "pages": [
-                      "introduction",
-                      "preface"
-                    ]
-                  },
-                  {
-                    "group": "Get Started",
-                    "pages": [
-                      "get-started/index",
-                      "get-started/foreword",
-                      "get-started/ch1",
-                      "get-started/ch2",
-                      "get-started/ch3",
-                      "get-started/ch4",
-                      "get-started/appendix-a",
-                      "get-started/appendix-b"
-                    ]
-                  },
-                  {
-                    "group": "Scope & Closures",
-                    "pages": [
-                      "scope-closures/index",
-                      "scope-closures/foreword",
-                      "scope-closures/ch1",
-                      "scope-closures/ch2",
-                      "scope-closures/ch3",
-                      "scope-closures/ch4",
-                      "scope-closures/ch5",
-                      "scope-closures/ch6",
-                      "scope-closures/ch7",
-                      "scope-closures/ch8",
-                      "scope-closures/appendix-a",
-                      "scope-closures/appendix-b"
-                    ]
-                  },
-                  {
-                    "group": "Objects & Classes",
-                    "pages": [
-                      "objects-classes/index",
-                      "objects-classes/foreword",
-                      "objects-classes/ch1",
-                      "objects-classes/ch2",
-                      "objects-classes/ch3",
-                      "objects-classes/ch4",
-                      "objects-classes/ch5"
-                    ]
-                  },
-                  {
-                    "group": "Types & Grammar",
-                    "pages": [
-                      "types-grammar/index",
-                      "types-grammar/foreword",
-                      "types-grammar/ch1",
-                      "types-grammar/ch2",
-                      "types-grammar/ch3",
-                      "types-grammar/ch4"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "Resources",
-                "groups": [
-                  {
-                    "group": "Community",
-                    "pages": [
-                      "contributing",
-                      "first-edition"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "repasos gramaticales",
-                "pages": [
-                  "repaso-gramatical-de-a1-y-a2"
-                ]
-              }
+            "group": "Introduction",
+            "pages": [
+              "introduction",
+              "preface"
+            ]
+          },
+          {
+            "group": "Get Started",
+            "pages": [
+              "get-started/index",
+              "get-started/foreword",
+              "get-started/ch1",
+              "get-started/ch2",
+              "get-started/ch3",
+              "get-started/ch4",
+              "get-started/appendix-a",
+              "get-started/appendix-b"
+            ]
+          },
+          {
+            "group": "Scope & Closures",
+            "pages": [
+              "scope-closures/index",
+              "scope-closures/foreword",
+              "scope-closures/ch1",
+              "scope-closures/ch2",
+              "scope-closures/ch3",
+              "scope-closures/ch4",
+              "scope-closures/ch5",
+              "scope-closures/ch6",
+              "scope-closures/ch7",
+              "scope-closures/ch8",
+              "scope-closures/appendix-a",
+              "scope-closures/appendix-b"
+            ]
+          },
+          {
+            "group": "Objects & Classes",
+            "pages": [
+              "objects-classes/index",
+              "objects-classes/foreword",
+              "objects-classes/ch1",
+              "objects-classes/ch2",
+              "objects-classes/ch3",
+              "objects-classes/ch4",
+              "objects-classes/ch5"
+            ]
+          },
+          {
+            "group": "Types & Grammar",
+            "pages": [
+              "types-grammar/index",
+              "types-grammar/foreword",
+              "types-grammar/ch1",
+              "types-grammar/ch2",
+              "types-grammar/ch3",
+              "types-grammar/ch4"
             ]
           }
+        ]
+      },
+      {
+        "dropdown": "Resources",
+        "groups": [
+          {
+            "group": "Community",
+            "pages": [
+              "contributing",
+              "first-edition"
+            ]
+          }
+        ]
+      },
+      {
+        "dropdown": "repasos gramaticales",
+        "pages": [
+          "repaso-gramatical-de-a1-y-a2"
         ]
       }
     ]

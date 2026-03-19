@@ -7,10 +7,6 @@
     "light": "#f46404",
     "dark": "#fcb47c"
   },
-  "logo": {
-    "light": "https://media.brand.dev/71bd0274-18ed-4fbf-b855-480ea2438b1b.png",
-    "dark": "https://media.brand.dev/98c1d59f-f488-4a25-b577-e953c1f7d776.png"
-  },
   "footer": {
     "socials": {
       "github": "https://github.com/getify/You-Dont-Know-JS"
@@ -102,5 +98,6 @@
         ]
       }
     ]
-  }
+  },
+  "logo": "/images/2.png"
 }

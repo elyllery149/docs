@@ -18,9 +18,9 @@
     }
   },
   "navigation": {
-    "dropdowns": [
+    "anchors": [
       {
-        "dropdown": "Books",
+        "anchor": "Books",
         "groups": [
           {
             "group": "Introduction",
@@ -85,7 +85,7 @@
         ]
       },
       {
-        "dropdown": "Resources",
+        "anchor": "Resources",
         "groups": [
           {
             "group": "Community",
@@ -97,7 +97,7 @@
         ]
       },
       {
-        "dropdown": "repasos gramaticales",
+        "anchor": "repasos gramaticales",
         "pages": [
           "repaso-gramatical-de-a1-y-a2"
         ]

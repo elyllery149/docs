@@ -101,10 +101,10 @@
   },
   "logo": "/images/2.png",
   "background": {
-    "image": {
-      "light": "/images/1.png",
-      "dark": "/images/1.png"
-    },
     "decoration": "windows"
+  },
+  "fonts": {
+    "family": "Palatino",
+    "weight": 100
   }
 }

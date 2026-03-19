@@ -99,5 +99,8 @@
       }
     ]
   },
-  "logo": "/images/2.png"
+  "logo": "/images/2.png",
+  "background": {
+    "image": "/images/1.png"
+  }
 }

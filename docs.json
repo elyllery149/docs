@@ -105,6 +105,6 @@
       "light": "/images/1.png",
       "dark": "/images/1.png"
     },
-    "decoration": "grid"
+    "decoration": "windows"
   }
 }

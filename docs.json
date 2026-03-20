@@ -136,6 +136,7 @@
     ]
   },
   "banner": {
-    "dismissible": true
+    "dismissible": true,
+    "content": "home"
   }
 }

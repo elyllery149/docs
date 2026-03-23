@@ -1,11 +1,11 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "name": "You Don't Know JS Yet",
-  "theme": "willow",
+  "name": "ely llery",
+  "theme": "almond",
   "colors": {
-    "primary": "#dc2a2a",
-    "light": "#c26464",
-    "dark": "#efaeae"
+    "primary": "#ffffff",
+    "light": "#ffffff",
+    "dark": "#ffffff"
   },
   "footer": {
     "links": [
@@ -119,7 +119,7 @@
   },
   "logo": "/images/2.png",
   "background": {
-    "decoration": "grid"
+    "decoration": "windows"
   },
   "fonts": {
     "family": "Palatino",
@@ -129,9 +129,17 @@
     "links": []
   },
   "thumbnails": {
-    "appearance": "light",
+    "appearance": "dark",
     "fonts": {
       "family": "Palatino"
+    }
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "api": {
+    "playground": {
+      "display": "interactive"
     }
   }
 }

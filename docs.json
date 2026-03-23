@@ -3,9 +3,9 @@
   "name": "You Don't Know JS Yet",
   "theme": "willow",
   "colors": {
-    "primary": "#000000",
-    "light": "#ffffff",
-    "dark": "#000000"
+    "primary": "#dc2a2a",
+    "light": "#c26464",
+    "dark": "#efaeae"
   },
   "footer": {
     "links": [
@@ -119,7 +119,7 @@
   },
   "logo": "/images/2.png",
   "background": {
-    "decoration": "windows"
+    "decoration": "grid"
   },
   "fonts": {
     "family": "Palatino",
@@ -138,6 +138,6 @@
     "strict": false
   },
   "styling": {
-    "eyebrows": "section"
+    "eyebrows": "breadcrumbs"
   }
 }

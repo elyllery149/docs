@@ -133,8 +133,5 @@
     "fonts": {
       "family": "Palatino"
     }
-  },
-  "appearance": {
-    "strict": false
   }
 }

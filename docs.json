@@ -8,24 +8,21 @@
     "dark": "#000000"
   },
   "footer": {
-    "socials": {
-      "github": "https://github.com/getify/You-Dont-Know-JS"
-    },
     "links": [
       {
-        "header": "Ely Llery",
+        "header": "none",
         "items": [
           {
-            "label": "home",
+            "label": "hey",
             "href": "https://facebook.com"
           }
         ]
       },
       {
-        "header": "Contact",
+        "header": "nothing",
         "items": [
           {
-            "label": "Email",
+            "label": "heyy",
             "href": "https://facebook.com"
           }
         ]
@@ -129,16 +126,7 @@
     "weight": 300
   },
   "navbar": {
-    "links": [
-      {
-        "label": "search",
-        "href": "https://elyllery.mintlify.app/"
-      }
-    ]
-  },
-  "banner": {
-    "dismissible": false,
-    "content": "home"
+    "links": []
   },
   "thumbnails": {
     "appearance": "light",
@@ -146,7 +134,7 @@
       "family": "Palatino"
     }
   },
-  "styling": {
-    "eyebrows": "section"
+  "appearance": {
+    "strict": false
   }
 }

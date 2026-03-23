@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "You Don't Know JS Yet",
-  "theme": "almond",
+  "theme": "willow",
   "colors": {
     "primary": "#fc9304",
     "light": "#f46404",

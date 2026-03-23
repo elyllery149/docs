@@ -3,9 +3,9 @@
   "name": "You Don't Know JS Yet",
   "theme": "willow",
   "colors": {
-    "primary": "#fc9304",
-    "light": "#f46404",
-    "dark": "#fcb47c"
+    "primary": "#000000",
+    "light": "#ffffff",
+    "dark": "#000000"
   },
   "footer": {
     "socials": {
@@ -126,7 +126,7 @@
   },
   "fonts": {
     "family": "Palatino",
-    "weight": 100
+    "weight": 300
   },
   "navbar": {
     "links": [
@@ -137,7 +137,16 @@
     ]
   },
   "banner": {
-    "dismissible": true,
+    "dismissible": false,
     "content": "home"
+  },
+  "thumbnails": {
+    "appearance": "light",
+    "fonts": {
+      "family": "Palatino"
+    }
+  },
+  "styling": {
+    "eyebrows": "section"
   }
 }

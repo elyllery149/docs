@@ -3,9 +3,9 @@
   "name": "Ely Llery",
   "theme": "sequoia",
   "colors": {
-    "primary": "#ffffff",
-    "light": "#ffffff",
-    "dark": "#ffffff"
+    "primary": "#a1c6a3",
+    "light": "#4ce8a2",
+    "dark": "#879c88"
   },
   "footer": {
     "links": [

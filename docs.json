@@ -30,9 +30,9 @@
     ]
   },
   "navigation": {
-    "products": [
+    "tabs": [
       {
-        "product": "Books",
+        "tab": "Books",
         "groups": [
           {
             "group": "Introduction",
@@ -97,7 +97,7 @@
         ]
       },
       {
-        "product": "Resources",
+        "tab": "Resources",
         "groups": [
           {
             "group": "Community",
@@ -109,7 +109,7 @@
         ]
       },
       {
-        "product": "repasos gramaticales",
+        "tab": "repasos gramaticales",
         "pages": [
           "repaso-gramatical-de-a1-y-a2",
           "a1-y-a2"

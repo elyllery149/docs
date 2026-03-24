@@ -119,7 +119,6 @@
   },
   "logo": "/images/2.png",
   "background": {
-    "decoration": "windows",
     "color": {
       "light": "#ffffff"
     }
@@ -138,11 +137,13 @@
     }
   },
   "appearance": {
-    "default": "system"
+    "default": "system",
+    "strict": true
   },
   "api": {
     "playground": {
       "display": "interactive"
     }
-  }
+  },
+  "description": "Ely Llery is me"
 }

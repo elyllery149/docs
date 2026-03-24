@@ -125,7 +125,7 @@
   },
   "fonts": {
     "family": "Palatino",
-    "weight": 300
+    "weight": 500
   },
   "navbar": {
     "links": []
@@ -137,13 +137,11 @@
     }
   },
   "appearance": {
-    "default": "system",
-    "strict": true
+    "strict": false
   },
   "api": {
     "playground": {
       "display": "interactive"
     }
-  },
-  "description": "Ely Llery is me"
+  }
 }

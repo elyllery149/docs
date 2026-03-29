@@ -112,8 +112,13 @@
         "version": "repasos gramaticales",
         "default": true,
         "pages": [
-          "repaso-gramatical-de-a1-y-a2",
-          "a1-y-a2"
+          "a1-y-a2",
+          {
+            "group": "A1 y A2",
+            "pages": [
+              "nociones-preliminares"
+            ]
+          }
         ]
       }
     ]

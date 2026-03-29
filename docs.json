@@ -130,8 +130,7 @@
     }
   },
   "fonts": {
-    "family": "Palatino",
-    "weight": 100
+    "family": "Palatino"
   },
   "navbar": {
     "links": []

@@ -120,6 +120,15 @@
             ]
           }
         ]
+      },
+      {
+        "version": "Pasos Gramaticales",
+        "default": true,
+        "tabs": [
+          {
+            "tab": "nociones preliminares"
+          }
+        ]
       }
     ]
   },

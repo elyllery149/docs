@@ -126,7 +126,10 @@
         "default": true,
         "tabs": [
           {
-            "tab": "nociones preliminares"
+            "tab": "nociones preliminares",
+            "pages": [
+              "gramatica"
+            ]
           }
         ]
       }

@@ -124,9 +124,9 @@
       {
         "version": "Pasos Gramaticales",
         "default": true,
-        "tabs": [
+        "anchors": [
           {
-            "tab": "nociones preliminares",
+            "anchor": "nociones preliminares",
             "pages": [
               "gramatica"
             ]

@@ -124,10 +124,11 @@
       {
         "version": "Pasos Gramaticales",
         "default": true,
-        "dropdowns": [
+        "groups": [
           {
-            "dropdown": "nociones preliminares",
+            "group": "nociones preliminares",
             "pages": [
+              "fff",
               "gramatica"
             ]
           }

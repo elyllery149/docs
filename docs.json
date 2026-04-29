@@ -124,9 +124,9 @@
       {
         "version": "Pasos Gramaticales",
         "default": true,
-        "groups": [
+        "products": [
           {
-            "group": "nociones preliminares",
+            "product": "nociones preliminares",
             "pages": [
               "fff",
               "gramatica"

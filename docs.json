@@ -158,15 +158,5 @@
     "playground": {
       "display": "interactive"
     }
-  },
-  "fonts": {
-    "heading": {
-      "family": "Felix Titling",
-      "weight": 300
-    },
-    "body": {
-      "family": "Palatino",
-      "weight": 300
-    }
   }
 }

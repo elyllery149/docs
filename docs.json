@@ -161,12 +161,16 @@
   },
   "fonts": {
     "heading": {
-      "family": "https://1drv.ms/u/c/5547093b92fa43c8/IQDSpUP2gQMKSoQlpeCdcnXVAdeSJiGOVlhTwJ5a7qxhXX0?e=nqVZYM",
-      "weight": 300
+      "family": "Felix Titling",
+      "weight": 300,
+      "source": "font/Felix Titling.woff2/",
+      "format": "woff2"
     },
     "body": {
-      "family": "https://1drv.ms/u/c/5547093b92fa43c8/IQA0L0OL_VOjTpmwpWjF8Iw6Ae1ZqC103Jq458gBq9Z8dvs?e=chjHCU",
-      "weight": 300
+      "family": "Palatino",
+      "weight": 300,
+      "source": "font/Palatino.woff2/",
+      "format": "woff2"
     }
   }
 }

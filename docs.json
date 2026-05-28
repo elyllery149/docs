@@ -142,16 +142,6 @@
       "light": "#ffffff"
     }
   },
-  "fonts": {
-    "heading": {
-      "family": "FELIX TITLING",
-      "weight": 100
-    },
-    "body": {
-      "family": "PALATINO",
-      "weight": 300
-    }
-  },
   "navbar": {
     "links": []
   },

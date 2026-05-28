@@ -158,5 +158,15 @@
     "playground": {
       "display": "interactive"
     }
+  },
+  "fonts": {
+    "heading": {
+      "family": "https://1drv.ms/u/c/5547093b92fa43c8/IQDSpUP2gQMKSoQlpeCdcnXVAdeSJiGOVlhTwJ5a7qxhXX0?e=nqVZYM",
+      "weight": 300
+    },
+    "body": {
+      "family": "https://1drv.ms/u/c/5547093b92fa43c8/IQA0L0OL_VOjTpmwpWjF8Iw6Ae1ZqC103Jq458gBq9Z8dvs?e=chjHCU",
+      "weight": 300
+    }
   }
 }

@@ -143,8 +143,14 @@
     }
   },
   "fonts": {
-    "family": "Styrene B",
-    "weight": 300
+    "heading": {
+      "family": "FELIX TITLING",
+      "weight": 100
+    },
+    "body": {
+      "family": "PALATINO LINOTYPE",
+      "weight": 300
+    }
   },
   "navbar": {
     "links": []
